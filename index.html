@@ -324,7 +324,7 @@ function practiceTask(){
   const t=k.tasks.find(x=>x.id===view.task);
   const done=t.done>=t.times;
   const listenUI=done?`<div class="row"><button class="bigbtn" data-act="home">Next song</button></div>`
-    :mic.on?`<div class="row"><span class="listening"><i></i><span id="micstate">Kitty ears are on…</span></span><button class="btn" data-act="earsoff">Stop</button></div>`
+    :mic.on?`<div class="row"><span class="listening"><i></i><span id="micvu" style="display:inline-block;width:5px;height:14px;background:#FFE07A;border-radius:3px;transform-origin:bottom;transform:scaleY(.1)"></span><span id="micstate">Kitty ears are on…</span></span><button class="btn" data-act="earsoff">Stop</button></div>`
     :`<div class="row"><button class="bigbtn" data-act="earson">Kitty, listen!</button></div>
       ${mic.err?`<p class="muted" style="text-align:center;max-width:38ch;margin:0 auto;font-size:.9rem">${mic.err==='unsupported'?'This device has no microphone I can use.':'The microphone is blocked in this preview window, so use the pretend buttons below. Real ears work in the installed app.'}</p>
       <div class="sim"><p>Pretend the kitty heard…</p><div class="row">
@@ -419,8 +419,9 @@ function finishRun(kind,info={}){
 
 /* ---------- real listening (Web Audio) ---------- */
 const mic={on:false,err:null,raf:0,ctx:null,an:null,stream:null,
-  noise:1e-4,onsets:[],playSec:0,lastTick:0,lastLevel:0,quietSince:0,stumbles:0};
-function micReset(){mic.onsets=[];mic.playSec=0;mic.quietSince=0;mic.stumbles=0;mic.lastLevel=0}
+  noise:1e-4,onsets:[],playSec:0,lastTick:0,lastLevel:0,quietSince:0,stumbles:0,
+  lastFb:0,fbIdx:0,shortNudged:false};
+function micReset(){mic.onsets=[];mic.playSec=0;mic.quietSince=0;mic.stumbles=0;mic.lastLevel=0;mic.lastFb=0;mic.shortNudged=false}
 async function micStart(){
   micReset();mic.err=null;
   if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){mic.err='unsupported';return false}
@@ -431,7 +432,7 @@ async function micStart(){
     const src=mic.ctx.createMediaStreamSource(mic.stream);
     const lo=mic.ctx.createBiquadFilter();lo.type='highpass';lo.frequency.value=55;
     const hi=mic.ctx.createBiquadFilter();hi.type='lowpass';hi.frequency.value=4500;
-    mic.an=mic.ctx.createAnalyser();mic.an.fftSize=2048;mic.an.smoothingTimeConstant=.3;
+    mic.an=mic.ctx.createAnalyser();mic.an.fftSize=2048;mic.an.smoothingTimeConstant=.25;
     src.connect(lo);lo.connect(hi);hi.connect(mic.an);
     mic.on=true;mic.lastTick=performance.now();micLoop();
     return true;
@@ -443,43 +444,72 @@ function micStop(){
   try{mic.ctx&&mic.ctx.close()}catch(e){}
   mic.ctx=mic.an=mic.stream=null;
 }
+// update the bubble in place while the kid plays, without a full re-render
+function liveSay(txt){
+  view.say=txt;
+  const el=document.querySelector('.speech');
+  if(el)el.textContent=txt;else render();
+  speak(txt);
+}
+function rollCV(n){
+  const o=mic.onsets.slice(-n),io=[];
+  for(let i=1;i<o.length;i++){const d=(o[i]-o[i-1])/1000;if(d>=0.12&&d<=1.6)io.push(d)}
+  if(io.length<5)return null;
+  const m=io.reduce((a,b)=>a+b,0)/io.length;
+  return Math.sqrt(io.reduce((a,b)=>a+(b-m)**2,0)/io.length)/m;
+}
+const FB_STEADY=["I hear you! Nice steady playing!","Ooh, that sounds lovely! Keep going!","My tail is swishing to your beat!"];
+const FB_WOBBLY=["Let\'s find the beat together. Slow and steady!","Hmm, wobbly! Try counting one, two, three, four.","Slooow down a little, like a sleepy kitty walk."];
 function micLoop(){
   if(!mic.on)return;
   const buf=new Uint8Array(mic.an.frequencyBinCount);
   mic.an.getByteFrequencyData(buf);
-  // average energy across piano band
   let sum=0;for(let i=2;i<buf.length*0.6;i++)sum+=buf[i];
   const level=sum/(buf.length*0.6)/255;
   const t=performance.now();
   const dt=(t-mic.lastTick)/1000;mic.lastTick=t;
-  // adaptive noise floor
   mic.noise=Math.min(mic.noise*(1+dt*0.05)+1e-6, Math.max(1e-4, mic.noise*(level<mic.noise*1.5?0.995:1)+level*0.002));
-  const active=level>Math.max(0.035,mic.noise*2.5);
+  const active=level>Math.max(0.026,mic.noise*2.2);
   if(active){
     mic.playSec+=dt;mic.quietSince=0;
-    // onset: sharp rise over recent level
-    if(level>mic.lastLevel*1.6&&level>0.05){
+    if(level>mic.lastLevel*1.45&&level>0.034){
       const last=mic.onsets[mic.onsets.length-1]||0;
-      if(t-last>120)mic.onsets.push(t);
+      if(t-last>110)mic.onsets.push(t);
+    }
+    // live coaching every ~9s of playing, so the kid is never met with silence
+    if(!mic.lastFb)mic.lastFb=t;
+    if(t-mic.lastFb>9000&&mic.onsets.length>=8){
+      mic.lastFb=t;
+      const cv=rollCV(16);
+      if(cv!==null){
+        const pool=cv>0.55?FB_WOBBLY:FB_STEADY;
+        liveSay(pool[(mic.fbIdx++)%pool.length]);
+      }
     }
   }else if(mic.onsets.length){
     mic.quietSince+=dt;
-    // mid-run stumble: pause 1.5-3.5s then (resumption detected next active frame)
-    if(mic.quietSince>1.6&&mic.quietSince<1.7&&mic.onsets.length>=5)mic.stumbles++;
-    if(mic.quietSince>3.5&&mic.onsets.length>=10){micRunEnd();return}
-    if(mic.quietSince>8&&mic.onsets.length<10){micReset()} // noise blip, start over
+    if(mic.quietSince>1.4&&mic.quietSince<1.5&&mic.onsets.length>=5){
+      mic.stumbles++;
+      if(mic.stumbles<=2)liveSay("Oops, tricky spot? Try just that bit, nice and slow!");
+    }
+    if(mic.quietSince>2.8&&mic.onsets.length>=6){micRunEnd();return}
+    if(mic.quietSince>5&&mic.onsets.length>=3&&mic.onsets.length<6&&!mic.shortNudged){
+      mic.shortNudged=true;
+      liveSay("That was a tiny one! Play me the whole song!");
+    }
+    if(mic.quietSince>10&&mic.onsets.length<6){micReset()}
   }
   mic.lastLevel=level*0.6+mic.lastLevel*0.4;
-  // live UI
   const el=document.getElementById('micstate');
   if(el)el.textContent=mic.onsets.length? '♪ '+mic.onsets.length+' notes heard':'Kitty ears are on…';
+  const vu=document.getElementById('micvu');
+  if(vu)vu.style.transform='scaleY('+Math.min(1,level*9).toFixed(2)+')';
   mic.raf=requestAnimationFrame(micLoop);
 }
 function micRunEnd(){
-  // steadiness from inter-onset intervals
   const io=[];for(let i=1;i<mic.onsets.length;i++){const d=(mic.onsets[i]-mic.onsets[i-1])/1000;if(d>=0.12&&d<=1.6)io.push(d)}
   let kind='good';
-  if(io.length>=6){
+  if(io.length>=5){
     const mean=io.reduce((a,b)=>a+b,0)/io.length;
     const sd=Math.sqrt(io.reduce((a,b)=>a+(b-mean)**2,0)/io.length);
     if(mic.stumbles>=2)kind='stuck';
@@ -500,7 +530,7 @@ document.addEventListener('click',e=>{
   if(d.sim){finishRun(d.sim,{minutes:d.sim==='good'?2:1});return}
   if(d.act==='home'){micStop();view.task=null;view.sheet=false;view.say=null;view.mood=null;render();return}
   if(d.act==='earson'){say("My ears are up! Play your song, I'm listening!");render();micStart().then(ok=>{if(!ok){say("Hmm, I can't hear in here. Use the pretend buttons for now!")}render()});return}
-  if(d.act==='earsoff'){micStop();say('Okay, break time!');render();return}
+  if(d.act==='earsoff'){const enough=mic.onsets.length>=6;if(enough)micRunEnd();micStop();if(!enough)say('Okay, break time!');render();return}
   if(d.act==='showsheet'){view.sheet=true;render();return}
   if(d.act==='hidesheet'){view.sheet=false;render();return}
   if(d.act==='gosheet'){const first=k.tasks.find(t=>t.done<t.times)||k.tasks[0];if(first){view.task=first.id;view.sheet=true}render();return}
