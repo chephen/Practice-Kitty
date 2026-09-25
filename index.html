@@ -144,6 +144,39 @@ input[type=text],select{font:inherit;padding:9px 12px;border-radius:12px;border:
 .ktail{transform-origin:140px 160px;animation:wag 2.4s ease-in-out infinite}
 @keyframes wag{50%{transform:rotate(12deg)}}
 .kears{transition:transform .3s}
+
+.notes{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.nchip{font:600 .78rem "Fredoka",sans-serif;background:var(--teal-soft);color:#2B7A63;border-radius:8px;padding:2px 7px;min-width:26px;text-align:center}
+.nchip.long{padding-inline:12px}
+.nchip.short{background:#EEF6F2;font-size:.7rem}
+.notesbar{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.notesbar .muted{font-size:.85rem}
+.editor{grid-column:1/-1;background:var(--bg);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.editor .keys{display:flex;gap:6px;flex-wrap:wrap}
+.editor .keys button{min-width:44px;height:44px;border-radius:12px;background:#fff;border:1.5px solid var(--line);font:600 1rem "Fredoka",sans-serif}
+.editor .beats button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.status{font-size:.85rem;color:var(--muted)}
+.status.err{color:#B23A48}
+.kb{width:100%;max-width:520px;margin:0 auto;display:block}
+.kb .w{fill:#fff;stroke:#D9CFC2;stroke-width:1.5}
+.kb .b{fill:#3B3543}
+.kb .lbl{font:600 13px "Fredoka",sans-serif;fill:#8B8175;text-anchor:middle}
+.kb .next.w{fill:#FCE6B0}
+.kb .next.b{fill:#E0A63A}
+.kb .ok{fill:#BFE8D7!important}
+.kb .bad{fill:#F7C1CB!important}
+.strip{display:flex;gap:6px;overflow-x:auto;padding:4px 2px;scroll-behavior:smooth;max-width:100%}
+.strip span{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:600 .82rem "Fredoka",sans-serif;background:var(--bg2);color:var(--muted)}
+.strip span.cur{background:var(--gold);color:#fff;transform:scale(1.12)}
+.strip span.ok{background:var(--teal);color:#fff}
+.strip span.miss{background:#F7C1CB;color:#A33A4C}
+.strip span.long{width:44px;border-radius:15px}
+.strip span.short{width:24px;height:24px;font-size:.7rem}
+.songmode .kitty{width:min(38vw,170px)!important}
+.songmode .stage{min-height:0!important;padding-bottom:14px}
+.songmode .deco{display:none}
+.songmode h2{font-size:1.3rem}
+.songmode{gap:10px!important}
 @media (prefers-reduced-motion:reduce){.kbody,.ktail,.listening i{animation:none}.heart{animation-duration:.01s}}
 @media (min-width:700px){.kitty{width:290px}.top{padding-inline:24px}}
 @media (max-width:430px){.kitty{width:min(58vw,230px)}.stage{min-height:0;padding-bottom:30px}.speech{font-size:1rem;max-width:28ch}.kidchip{padding:4px 10px 4px 4px;font-size:.92rem}.kidchip .dot{width:22px;height:22px}.coin{padding:4px 9px}.deco.piano{width:70px}.deco.win{width:58px}.deco.plant{width:48px}.streak span{width:22px;height:22px;font-size:.66rem}.task b{font-size:1.05rem}.careRow{gap:8px}}
@@ -232,6 +265,34 @@ function kittySVG(o={}){
   </g>`;
 }
 
+/* ---------- song library (right hand, C position) ---------- */
+// notes: [midi, beats]. 60 = middle C.
+const C4=60,D4=62,E4=64,F4=65,G4=67,A4=69,B4=71,C5=72;
+const SONGS={
+  twinkle:{name:'Twinkle Twinkle',notes:[[C4,1],[C4,1],[G4,1],[G4,1],[A4,1],[A4,1],[G4,2],[F4,1],[F4,1],[E4,1],[E4,1],[D4,1],[D4,1],[C4,2]]},
+  hotcross:{name:'Hot Cross Buns',notes:[[E4,1],[D4,1],[C4,2],[E4,1],[D4,1],[C4,2],[C4,.5],[C4,.5],[C4,.5],[C4,.5],[D4,.5],[D4,.5],[D4,.5],[D4,.5],[E4,1],[D4,1],[C4,2]]},
+  mary:{name:'Mary Had a Little Lamb',notes:[[E4,1],[D4,1],[C4,1],[D4,1],[E4,1],[E4,1],[E4,2],[D4,1],[D4,1],[D4,2],[E4,1],[G4,1],[G4,2],[E4,1],[D4,1],[C4,1],[D4,1],[E4,1],[E4,1],[E4,1],[E4,1],[D4,1],[D4,1],[E4,1],[D4,1],[C4,4]]},
+  cscale:{name:'C major scale',notes:[[C4,1],[D4,1],[E4,1],[F4,1],[G4,1],[A4,1],[B4,1],[C5,1],[B4,1],[A4,1],[G4,1],[F4,1],[E4,1],[D4,1],[C4,2]]},
+};
+const NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const nn=m=>NOTE_NAMES[((m%12)+12)%12];
+function songFor(t){
+  if(!t)return null;
+  if(t.notes&&t.notes.length)return {name:t.name,notes:t.notes};
+  if(t.song&&SONGS[t.song])return SONGS[t.song];
+  return null;
+}
+const NAME2PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function parsePitch(p){
+  const m=/^\s*([A-Ga-g])\s*([#b♯♭]?)\s*(-?\d)?\s*$/.exec(p||'');
+  if(!m)return null;
+  let pc=NAME2PC[m[1].toUpperCase()];
+  if(m[2]==='#'||m[2]==='♯')pc++;if(m[2]==='b'||m[2]==='♭')pc--;
+  const oct=m[3]!==undefined?+m[3]:4;
+  return 12*(oct+1)+pc;
+}
+const pname=m=>nn(m)+(Math.floor(m/12)-1);
+
 /* ---------- state ---------- */
 const KEY='practice-kitty-v1';
 const today=()=>new Date().toISOString().slice(0,10);
@@ -241,13 +302,13 @@ function sample(){
     kids:[
       {id:'k1',name:'Lulu',color:'#F2A25C',fish:3,stars:4,owned:['bow'],wearing:['bow'],fed:0,streak:[1,1,0,1,1,1,0],
        tasks:[
-         {id:'t1',name:'Twinkle Twinkle',times:3,focus:'right',done:0,stuck:0},
-         {id:'t2',name:'C major scale',times:2,focus:'slow',done:2,stuck:0},
-         {id:'t3',name:'Hot Cross Buns',times:3,focus:'both',done:0,stuck:0}],
+         {id:'t1',name:'Twinkle Twinkle',song:'twinkle',times:3,focus:'right',done:0,stuck:0},
+         {id:'t2',name:'C major scale',song:'cscale',times:2,focus:'slow',done:2,stuck:0},
+         {id:'t3',name:'Hot Cross Buns',song:'hotcross',times:3,focus:'right',done:0,stuck:0}],
        log:[{t:'4:02 PM',text:'C major scale, 2 of 2 run-throughs, steady beat'},{t:'3:58 PM',text:'C major scale, 1 run-through, rushed (♩≈118, aim 80)'}],
        minutes:6, worksheet:null},
       {id:'k2',name:'Max',color:'#9A6FD0',fish:1,stars:1,owned:[],wearing:[],fed:0,streak:[0,1,1,0,1,0,0],
-       tasks:[{id:'t4',name:'Middle C march',times:3,focus:'left',done:0,stuck:0}],
+       tasks:[{id:'t4',name:'Mary Had a Little Lamb',song:'mary',times:3,focus:'right',done:0,stuck:0}],
        log:[],minutes:0,worksheet:null}
     ],
     day:today(), sample:true
@@ -341,12 +402,13 @@ function practiceTask(){
       <div class="sim"><p>Pretend the kitty heard…</p><div class="row">
         <button class="btn primary" data-sim="good">Steady playing</button>
         <button class="btn" data-sim="fast">Wobbly beat</button>
-        <button class="btn" data-sim="stuck">Got stuck</button></div></div>`:''}`;
-  return `<div class="screen" style="padding-top:8px"><button class="back" data-act="home">‹ All songs</button>
+        <button class="btn" data-sim="stuck">Got stuck</button>${songFor(t)?'<button class="btn" data-sim="notes">Wrong notes</button>':''}</div></div>`:''}`;
+  return `<div class="screen ${songFor(t)&&!done?'songmode':''}" style="padding-top:8px"><button class="back" data-act="home">‹ All songs</button>
     ${view.sheet&&k.worksheet?`<div class="panel" style="align-items:center"><img src="${k.worksheet}" alt="Music sheet" style="max-width:100%;border-radius:12px"><button class="btn primary" data-act="hidesheet">Back to my kitty</button></div>`:`
     ${kittyStage()}
     <div style="text-align:center"><h2>${esc(t.name)}</h2><div class="pips" style="justify-content:center;margin-top:8px">${Array.from({length:t.times},(_,i)=>`<i class="${i<t.done?'on':''}" style="width:22px;height:22px"></i>`).join('')}</div>
     ${k.worksheet?`<div style="margin-top:10px"><button class="btn" data-act="showsheet">See my music</button></div>`:''}</div>
+    ${!done&&songFor(t)?`<div id="strip" class="strip" aria-label="Song notes">${stripHTML()}</div>${kbSVG()}`:''}
     ${listenUI}`}
   </div>`;
 }
@@ -385,7 +447,8 @@ function parent(){
         <input type="text" id="n-${t.id}" value="${esc(t.name)}" data-name="${t.id}" aria-label="Song name">
         <div class="stepper" aria-label="Times to play"><button data-step="-1" data-t="${t.id}">−</button><span>${t.times}×</span><button data-step="1" data-t="${t.id}">+</button></div>
         <button class="btn danger" data-del="${t.id}" aria-label="Remove">Remove</button>
-        <div class="focusline"><select id="f-${t.id}" data-focus="${t.id}" aria-label="Focus">${Object.entries(FOCI).map(([v,l])=>`<option value="${v}" ${t.focus===v?'selected':''}>${l}</option>`).join('')}</select></div></div>`).join('')}</div>
+        <div class="focusline"><select id="f-${t.id}" data-focus="${t.id}" aria-label="Focus">${Object.entries(FOCI).map(([v,l])=>`<option value="${v}" ${t.focus===v?'selected':''}>${l}</option>`).join('')}</select></div>
+        ${notesRow(t,k)}</div>`).join('')}</div>
       <div class="row" style="justify-content:flex-start"><button class="btn primary" data-act="addtask">Add a song</button></div>
     </div>
     <div class="panel"><h3>Kids</h3>
@@ -393,13 +456,84 @@ function parent(){
       <p class="muted" style="margin:0;font-size:.9rem">Use a nickname. Practice Kitty never records or saves sound, and everything stays on this device.</p>
       <div class="row" style="justify-content:flex-start"><button class="btn" data-act="addkid">Add a kid</button><button class="btn" data-act="sound">Kitty voice: ${S.sound?'on':'off'}</button><button class="btn danger" data-act="reset">Reset sample data</button></div>
     </div>
+    <div class="panel"><h3>Sheet reading</h3>
+      <p class="muted" style="margin:0;font-size:.9rem">To read notes off a music sheet photo, the app sends <b>only that photo</b> to Claude (Anthropic's AI). Sound never leaves this device. Paste your Anthropic API key once; it stays on this device.</p>
+      <input type="password" id="apikey" data-apikey="1" placeholder="sk-ant-…" value="${S.apiKey?'••••••••••••':''}" autocomplete="off" aria-label="Anthropic API key">
+      <span class="status">${S.apiKey?'Key saved on this device.':'No key yet. Get one at console.anthropic.com.'}</span>
+    </div>
     <div class="row"><button class="btn" data-act="lock">Lock grown-up area</button></div>
   </div>`;
+}
+function notesRow(t,k){
+  const sg=songFor(t);
+  const chips=sg?sg.notes.map(([m,b])=>`<span class="nchip ${b>=2?'long':b<1?'short':''}">${nn(m)}</span>`).join(''):'';
+  const st=view.readStatus&&view.readStatus.id===t.id?`<span class="status ${view.readStatus.err?'err':''}">${esc(view.readStatus.msg)}</span>`:'';
+  return `<div class="notesbar">
+      ${sg?`<span class="muted">${sg.notes.length} notes:</span>`:'<span class="muted">No notes yet, so the kitty checks rhythm only.</span>'}
+      <button class="btn" data-read="${t.id}" ${k.worksheet?'':'disabled title="Upload a music sheet first"'}>Read notes from sheet</button>
+      <button class="btn" data-editnotes="${t.id}">${view.editing===t.id?'Close editor':'Edit notes'}</button>${st}
+    </div>
+    ${sg?`<div class="notes">${chips}</div>`:''}
+    ${view.editing===t.id?noteEditor(t):''}`;
+}
+function noteEditor(t){
+  const beat=view.edBeat||1;
+  const keys=[['C',60],['D',62],['E',64],['F',65],['G',67],['A',69],['B',71],['C↑',72],['D↑',74],['E↑',76]];
+  return `<div class="editor">
+    <div class="keys">${keys.map(([l,m])=>`<button data-addnote="${m}" data-t="${t.id}">${l}</button>`).join('')}</div>
+    <div class="keys beats"><span class="muted" style="align-self:center;font-size:.85rem">Length:</span>${[[.5,'short'],[1,'normal'],[2,'long'],[4,'very long']].map(([b,l])=>`<button aria-pressed="${beat===b}" data-beat="${b}" style="min-width:auto;padding:0 12px">${l}</button>`).join('')}</div>
+    <div class="row" style="justify-content:flex-start"><button class="btn" data-undonote="${t.id}">Undo last</button><button class="btn danger" data-clearnotes="${t.id}">Clear all</button></div>
+  </div>`;
+}
+
+/* ---------- read notes from the sheet photo with Claude ---------- */
+let SDK=null;
+async function readSheet(t,k){
+  if(!S.apiKey){view.readStatus={id:t.id,msg:'Add your API key under Sheet reading first.',err:true};render();return}
+  view.readStatus={id:t.id,msg:'Reading the sheet…'};render();
+  try{
+    if(!SDK)SDK=(await import('https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm')).default;
+    const client=new SDK({apiKey:S.apiKey,dangerouslyAllowBrowser:true});
+    const data=k.worksheet.split(',')[1];
+    const hand=t.focus==='left'?'the left-hand (bass clef) part':'the melody (right hand, treble clef)';
+    const res=await client.beta.messages.create({
+      model:'claude-opus-5',
+      max_tokens:16000,
+      betas:['server-side-fallback-2026-07-01'],
+      fallbacks:'default',
+      output_config:{format:{type:'json_schema',schema:{
+        type:'object',additionalProperties:false,required:['found','notes'],
+        properties:{
+          found:{type:'boolean'},
+          notes:{type:'array',items:{type:'object',additionalProperties:false,required:['pitch','beats'],
+            properties:{pitch:{type:'string'},beats:{type:'number'}}}}
+        }}}},
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data}},
+        {type:'text',text:`This is a photo of a beginner piano lesson page. Find the piece called "${t.name}" (if the page has only one piece, use it). Transcribe ${hand} as an ordered list of single notes. For each note give the pitch in scientific notation (middle C is C4, sharps as C#4, flats as Bb4) and its length in beats (quarter note = 1, half = 2, whole = 4, eighth = 0.5). Where two notes sound together, give only the top melody note. Skip rests. Follow repeat signs by writing the repeated notes out. If you cannot find or read the piece, set found to false and return an empty list.`}
+      ]}]
+    });
+    if(res.stop_reason==='refusal'){view.readStatus={id:t.id,msg:'Could not read this sheet. Try a clearer photo or enter the notes by hand.',err:true};render();return}
+    const txt=res.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const out=JSON.parse(txt);
+    const notes=(out.notes||[]).map(n=>[parsePitch(n.pitch),Math.max(.25,Math.min(8,+n.beats||1))]).filter(n=>n[0]!==null);
+    if(!out.found||!notes.length){view.readStatus={id:t.id,msg:`Couldn't find "${t.name}" on the sheet. Check the song name matches, or enter the notes by hand.`,err:true};render();return}
+    t.notes=notes;delete t.song;save();
+    view.readStatus={id:t.id,msg:`Found ${notes.length} notes. Please check them against the sheet.`};
+    view.editing=t.id;render();
+  }catch(e){
+    const st=e&&e.status;
+    view.readStatus={id:t.id,err:true,msg:st===401?'That API key was not accepted. Check it under Sheet reading.':st===429?'Too many requests right now. Try again in a minute.':'Could not reach the sheet reader. Check your internet and try again.'};
+    render();
+  }
 }
 function render(){
   renderTop();
   const m=$('#main');
+  if(view.tab==='practice'&&view.task&&(!S2.song||S2.song!==songFor(kid().tasks.find(x=>x.id===view.task))))songStart(songFor(kid().tasks.find(x=>x.id===view.task)));
+  if(!(view.tab==='practice'&&view.task))S2.on=false;
   m.innerHTML=view.tab==='practice'?(view.task?practiceTask():practiceHome()):view.tab==='kitty'?kittyScreen():`<div style='padding-top:10px'>${parent()}</div>`;
+  if(view.tab==='practice'&&view.task)drawSongUI();
 }
 
 /* ---------- effects ---------- */
@@ -419,13 +553,129 @@ function finishRun(kind,info={}){
   const k=kid();const t=k.tasks.find(x=>x.id===view.task);if(!t)return;
   const mins=Math.max(1,Math.round(info.minutes||1));
   k.minutes+=mins;
-  if(kind==='good'){t.done++;k.log.unshift({t:now(),text:`${t.name}, run-through ${t.done} of ${t.times}, steady beat`});
+  const pl=(x,w)=>`${x} ${w}${x===1?'':'s'}`;
+  const detail=info.n?`, ${info.wrong?pl(info.wrong,'wrong note'):'every note right'}${info.rOff?`, ${pl(info.rOff,'rhythm slip')}`:''}`:', steady beat';
+  if(kind==='notes'){k.log.unshift({t:now(),text:`${t.name}, stuck on notes (${info.wrong} wrong notes), trying again`});t.stuck++;say(`${info.wrong} oopsie notes! Watch the yellow key and play it again, slowly.`)}
+  if(kind==='good'){t.done++;k.log.unshift({t:now(),text:`${t.name}, run-through ${t.done} of ${t.times}${detail}`});
     if(t.done>=t.times){k.fish++;say(`Yippee, you did it! You won a fishy for me!`,'happy');confetti();
       if(k.tasks.every(x=>x.done>=x.times)){k.stars++;k.streak[(new Date().getDay()+6)%7]=1;setTimeout(()=>{say('Hooray! All your songs are done! You get a shiny star!','happy');render()},1800)}}
     else say(`Purr-fect! That's ${t.done} of ${t.times}! Again, again!`,'happy')}
   if(kind==='fast'){k.log.unshift({t:now(),text:`${t.name}, wobbly beat, trying again`});say('Whoa, wobbly paws! Let\'s play it again, slooow and steady like a sleepy kitty.')}
   if(kind==='stuck'){t.stuck++;k.log.unshift({t:now(),text:`${t.name}, stuck in the middle, restarted`});say('Ooh, a tricky bit! Play just that part three times, teeny tiny slow.')}
+  if(t.done>=t.times)micStop();
   save();render();
+}
+
+/* ---------- pitch detection (YIN) + score following ---------- */
+let TD=null;
+function detectPitch(an,sr){
+  if(!TD||TD.length!==an.fftSize)TD=new Float32Array(an.fftSize);
+  an.getFloatTimeDomainData(TD);
+  const n=TD.length;let rms=0;for(let i=0;i<n;i++)rms+=TD[i]*TD[i];rms=Math.sqrt(rms/n);
+  if(rms<0.006)return null;
+  const minLag=Math.floor(sr/1100),maxLag=Math.min(Math.floor(sr/75),n>>1),W=n-maxLag;
+  const d=new Float32Array(maxLag+1);
+  for(let tau=1;tau<=maxLag;tau++){let sum=0;for(let j=0;j<W;j++){const x=TD[j]-TD[j+tau];sum+=x*x}d[tau]=sum}
+  let run=0;const c=new Float32Array(maxLag+1);c[0]=1;
+  for(let tau=1;tau<=maxLag;tau++){run+=d[tau];c[tau]=run?d[tau]*tau/run:1}
+  let tau=-1;
+  for(let i=minLag;i<=maxLag;i++){if(c[i]<0.15){while(i+1<=maxLag&&c[i+1]<c[i])i++;tau=i;break}}
+  if(tau<0){let best=1,bi=-1;for(let i=minLag;i<=maxLag;i++)if(c[i]<best){best=c[i];bi=i}if(best>0.3)return null;tau=bi}
+  const a=c[tau-1]||c[tau],b=c[tau],cc=c[tau+1]||c[tau];
+  const den=a+cc-2*b;const shift=den?(a-cc)/(2*den):0;
+  const f=sr/(tau+shift);
+  return {midi:Math.round(69+12*Math.log2(f/440)),conf:1-b,f};
+}
+const S2={on:false,song:null,idx:0,marks:[],times:[],wrong:0,lastWrongAt:0,lastWrongPc:-1,rhythmOff:0,lastRhythmSay:0,pend:null};
+function songStart(sg){Object.assign(S2,{on:!!sg,song:sg,idx:0,marks:sg?sg.notes.map(()=>''):[],times:[],wrong:0,lastWrongAt:0,lastWrongPc:-1,rhythmOff:0,lastRhythmSay:0,pend:null})}
+function pcEq(a,b){return ((a-b)%12+12)%12===0}
+function songNote(midi,t,str=9){
+  if(!S2.on||S2.idx>=S2.song.notes.length)return;
+  const exp=S2.song.notes[S2.idx][0];
+  flashKey(midi,pcEq(midi,exp)?'ok':'bad');
+  if(pcEq(midi,exp)){
+    if(S2.hold){clearTimeout(S2.hold.timer);S2.hold=null}
+    S2.marks[S2.idx]='ok';S2.times[S2.idx]=t;
+    // rhythm vs the song's own note lengths at the kid's own speed
+    const i=S2.idx;
+    if(i>=1&&S2.times[i-1]){
+      const ratios=[];for(let j=1;j<=i;j++)if(S2.times[j]&&S2.times[j-1])ratios.push((S2.times[j]-S2.times[j-1])/1000/S2.song.notes[j-1][1]);
+      if(ratios.length>=3){
+        const sorted=ratios.slice().sort((x,y)=>x-y),beat=sorted[sorted.length>>1];
+        const r=ratios[ratios.length-1]/beat;
+        if(r<0.55||r>1.8){S2.rhythmOff++;
+          if(t-S2.lastRhythmSay>6000&&t-S2.lastWrongAt>2500){S2.lastRhythmSay=t;
+            const prevBeats=S2.song.notes[i-1][1];
+            liveSay(r<0.55?(prevBeats>=2?'Hold the long notes longer, count 1, 2!':'Whoa, speedy! Slow and steady.'):'Keep going, don\'t stop! Try to play smooth.')}}
+      }
+    }
+    S2.idx++;
+  }else if(S2.idx+1<S2.song.notes.length&&pcEq(midi,S2.song.notes[S2.idx+1][0])&&S2.idx>0){
+    // skipped one note: accept and move on
+    S2.marks[S2.idx]='miss';S2.marks[S2.idx+1]='ok';S2.times[S2.idx+1]=t;S2.idx+=2;S2.wrong++;
+  }else{
+    const pc=((midi%12)+12)%12;
+    if(pc===S2.lastWrongPc&&t-S2.lastWrongAt<700)return;
+    const prev=S2.idx>0?S2.song.notes[S2.idx-1][0]:null;
+    if(prev!==null&&pcEq(midi,prev)&&S2.times[S2.idx-1]){
+      const io=[];for(let j=1;j<S2.idx;j++)if(S2.times[j]&&S2.times[j-1])io.push(S2.times[j]-S2.times[j-1]);
+      io.sort((a,b)=>a-b);const med=io.length?io[io.length>>1]:700;
+      if(t-S2.times[S2.idx-1]<Math.max(180,med*0.45))return;
+      // could be the previous key still ringing: only count it if the right note doesn't follow right away
+      clearTimeout(S2.hold&&S2.hold.timer);
+      const idxAt=S2.idx;
+      S2.hold={t,timer:setTimeout(()=>{S2.hold=null;if(S2.on&&S2.idx===idxAt)commitWrong(midi,t)},Math.max(330,med*0.75))};
+      return;
+    }
+    commitWrong(midi,t);return;
+  }
+  drawSongUI();
+  if(S2.idx>=S2.song.notes.length)setTimeout(songEnd,350);
+}
+function commitWrong(midi,t){
+  const exp=S2.song.notes[S2.idx][0];
+  S2.wrong++;S2.lastWrongPc=((midi%12)+12)%12;
+  if(t-S2.lastWrongAt>2500)liveSay(`Oops! That was ${nn(midi)}. Try ${nn(exp)}!`);
+  S2.lastWrongAt=t;S2.marks[S2.idx]=S2.marks[S2.idx]||'bad';
+  drawSongUI();
+}
+function songEnd(){
+  if(!S2.on)return;
+  const n=S2.song.notes.length,wrong=S2.wrong,rOff=S2.rhythmOff;
+  const mins=mic.playSec/60;
+  songStart(S2.song);micReset();
+  let kind='good';
+  if(wrong>Math.max(2,Math.round(n*0.15)))kind='notes';
+  else if(rOff>Math.max(2,Math.round(n*0.2)))kind='fast';
+  finishRun(kind,{minutes:Math.max(1,Math.round(mins)),wrong,rOff,n});
+}
+function flashKey(midi,cls){
+  const el=document.querySelector(`#kb [data-m="${midi}"]`)||document.querySelector(`#kb [data-pc="${((midi%12)+12)%12}"]`);
+  if(!el)return;el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),350);
+}
+function kbSVG(){
+  const whites=[60,62,64,65,67,69,71,72,74,76],names=['C','D','E','F','G','A','B','C','D','E'];
+  const blacks=[[61,0],[63,1],[66,3],[68,4],[70,5],[73,7],[75,8]];
+  const w=52,H=150;
+  return `<svg id="kb" class="kb" viewBox="0 0 ${whites.length*w} ${H}" role="img" aria-label="Piano keys">
+    ${whites.map((m,i)=>`<rect class="w" data-m="${m}" data-pc="${m%12}" x="${i*w+1}" y="1" width="${w-2}" height="${H-2}" rx="6"/><text class="lbl" x="${i*w+w/2}" y="${H-14}">${names[i]}</text>`).join('')}
+    ${blacks.map(([m,i])=>`<rect class="b" data-m="${m}" x="${(i+1)*w-15}" y="1" width="30" height="${H*0.6}" rx="4"/>`).join('')}
+  </svg>`;
+}
+function stripHTML(){
+  const sg=S2.song;if(!sg)return'';
+  return sg.notes.map(([m,b],i)=>`<span class="${i===S2.idx?'cur':S2.marks[i]==='ok'?'ok':S2.marks[i]==='miss'?'miss':''} ${b>=2?'long':b<1?'short':''}">${nn(m)}</span>`).join('');
+}
+function drawSongUI(){
+  const st=document.getElementById('strip');if(st){st.innerHTML=stripHTML();const c=st.querySelector('.cur');if(c)st.scrollLeft=c.offsetLeft-st.clientWidth/2}
+  document.querySelectorAll('#kb .next').forEach(e=>e.classList.remove('next'));
+  if(S2.song&&S2.idx<S2.song.notes.length){
+    const m=S2.song.notes[S2.idx][0];
+    const el=document.querySelector(`#kb [data-m="${m}"]`)||document.querySelector(`#kb [data-pc="${((m%12)+12)%12}"]`);
+    if(el)el.classList.add('next');
+  }
+  const ms=document.getElementById('micstate');
+  if(ms&&S2.song&&mic.on)ms.textContent=`♪ ${Math.min(S2.idx,S2.song.notes.length)} of ${S2.song.notes.length} notes`;
 }
 
 /* ---------- real listening (Web Audio) ---------- */
@@ -471,8 +721,10 @@ function rollCV(n){
 }
 const FB_STEADY=["I hear you! Nice steady playing!","Ooh, that sounds lovely! Keep going!","My tail is swishing to your beat!"];
 const FB_WOBBLY=["Let\'s find the beat together. Slow and steady!","Hmm, wobbly! Try counting one, two, three, four.","Slooow down a little, like a sleepy kitty walk."];
+function ttsBusy(){try{return speechSynthesis.speaking}catch(e){return false}}
 function micLoop(){
   if(!mic.on)return;
+  mic.raf=requestAnimationFrame(micLoop);
   const buf=new Uint8Array(mic.an.frequencyBinCount);
   mic.an.getByteFrequencyData(buf);
   let sum=0;for(let i=2;i<buf.length*0.6;i++)sum+=buf[i];
@@ -480,42 +732,67 @@ function micLoop(){
   const t=performance.now();
   const dt=(t-mic.lastTick)/1000;mic.lastTick=t;
   mic.noise=Math.min(mic.noise*(1+dt*0.05)+1e-6, Math.max(1e-4, mic.noise*(level<mic.noise*1.5?0.995:1)+level*0.002));
+  const vu=document.getElementById('micvu');
+  if(vu)vu.style.transform='scaleY('+Math.min(1,level*9).toFixed(2)+')';
+  // the kitty's own voice must not count as piano notes
+  if(ttsBusy())mic.muteUntil=t+350;
+  if(t<(mic.muteUntil||0)){mic.lastLevel=level;S2.pend=null;return}
   const active=level>Math.max(0.026,mic.noise*2.2);
+  // spectral flux: new energy appearing across the spectrum = a key being struck (steadier than overall loudness)
+  let flux=0;const lim=Math.floor(buf.length*0.6);
+  if(mic.prevSpec){for(let i=2;i<lim;i++){const dlt=buf[i]-mic.prevSpec[i];if(dlt>0)flux+=dlt}flux/=(lim*255)}
+  mic.prevSpec=buf;
+  const fh=mic.fluxHist||(mic.fluxHist=[]);
+  const avg=fh.length?fh.reduce((a,b)=>a+b,0)/fh.length:0;
+  const thr=Math.max(0.018,avg*2.4);
+  const isOnset=flux>thr&&(mic.lastFlux||0)<=thr;
+  mic.lastFlux=flux;fh.push(flux);if(fh.length>45)fh.shift();
+  // finish a pending pitch reading: skip the hammer attack, then take the median of a few frames
+  if(S2.on&&S2.pend){
+    // time-based, not frame-based: the analyser window (~43ms) must be clear of the previous note
+    const age=t-S2.pend.t;
+    if(age>=65&&t-(S2.pend.lastRead||0)>=12){S2.pend.lastRead=t;const p=detectPitch(mic.an,mic.ctx.sampleRate);if(p&&p.conf>0.8)S2.pend.vals.push(p.midi)}
+    if(age>=150&&S2.pend.vals.length>=2||age>=260){const v=S2.pend.vals.sort((a,b)=>a-b);const pt=S2.pend.t,ps=S2.pend.str;S2.pend=null;if(v.length>=2)songNote(v[v.length>>1],pt,ps)}
+  }
   if(active){
     mic.playSec+=dt;mic.quietSince=0;
-    if(level>mic.lastLevel*1.45&&level>0.034){
+    if(isOnset&&level>0.03){
       const last=mic.onsets[mic.onsets.length-1]||0;
-      if(t-last>110)mic.onsets.push(t);
+      if(t-last>110){
+        mic.onsets.push(t);
+        if(S2.on){if(S2.pend&&S2.pend.vals.length>=2){const v=S2.pend.vals.sort((a,b)=>a-b);songNote(v[v.length>>1],S2.pend.t,S2.pend.str)}S2.pend={t,age:0,vals:[],str:level/Math.max(1e-4,mic.lastLevel)}}
+      }
     }
-    // live coaching every ~9s of playing, so the kid is never met with silence
-    if(!mic.lastFb)mic.lastFb=t;
-    if(t-mic.lastFb>9000&&mic.onsets.length>=8){
-      mic.lastFb=t;
-      const cv=rollCV(16);
-      if(cv!==null){
-        const pool=cv>0.55?FB_WOBBLY:FB_STEADY;
-        liveSay(pool[(mic.fbIdx++)%pool.length]);
+    if(!S2.on){
+      if(!mic.lastFb)mic.lastFb=t;
+      if(t-mic.lastFb>9000&&mic.onsets.length>=8){
+        mic.lastFb=t;
+        const cv=rollCV(16);
+        if(cv!==null){const pool=cv>0.55?FB_WOBBLY:FB_STEADY;liveSay(pool[(mic.fbIdx++)%pool.length])}
       }
     }
   }else if(mic.onsets.length){
     mic.quietSince+=dt;
-    if(mic.quietSince>1.4&&mic.quietSince<1.5&&mic.onsets.length>=5){
-      mic.stumbles++;
-      if(mic.stumbles<=2)liveSay("Oops, tricky spot? Try just that bit, nice and slow!");
+    if(S2.on){
+      // mid-song pause: encourage, but let them continue where they left off
+      if(mic.quietSince>4&&mic.quietSince<4+dt+0.001&&S2.idx>0&&S2.idx<S2.song.notes.length)liveSay(`You're doing great! Next note is ${nn(S2.song.notes[S2.idx][0])}.`);
+      if(mic.quietSince>15){mic.onsets=[]}
+    }else{
+      if(mic.quietSince>1.4&&mic.quietSince<1.5&&mic.onsets.length>=5){
+        mic.stumbles++;
+        if(mic.stumbles<=2)liveSay("Oops, tricky spot? Try just that bit, nice and slow!");
+      }
+      if(mic.quietSince>2.8&&mic.onsets.length>=6){micRunEnd();return}
+      if(mic.quietSince>5&&mic.onsets.length>=3&&mic.onsets.length<6&&!mic.shortNudged){
+        mic.shortNudged=true;
+        liveSay("That was a tiny one! Play me the whole song!");
+      }
+      if(mic.quietSince>10&&mic.onsets.length<6){micReset()}
     }
-    if(mic.quietSince>2.8&&mic.onsets.length>=6){micRunEnd();return}
-    if(mic.quietSince>5&&mic.onsets.length>=3&&mic.onsets.length<6&&!mic.shortNudged){
-      mic.shortNudged=true;
-      liveSay("That was a tiny one! Play me the whole song!");
-    }
-    if(mic.quietSince>10&&mic.onsets.length<6){micReset()}
   }
   mic.lastLevel=level*0.6+mic.lastLevel*0.4;
   const el=document.getElementById('micstate');
-  if(el)el.textContent=mic.onsets.length? '♪ '+mic.onsets.length+' notes heard':'Kitty ears are on…';
-  const vu=document.getElementById('micvu');
-  if(vu)vu.style.transform='scaleY('+Math.min(1,level*9).toFixed(2)+')';
-  mic.raf=requestAnimationFrame(micLoop);
+  if(el&&!S2.on)el.textContent=mic.onsets.length? '♪ '+mic.onsets.length+' notes heard':'Kitty ears are on…';
 }
 function micRunEnd(){
   const io=[];for(let i=1;i<mic.onsets.length;i++){const d=(mic.onsets[i]-mic.onsets[i-1])/1000;if(d>=0.12&&d<=1.6)io.push(d)}
@@ -538,9 +815,9 @@ document.addEventListener('click',e=>{
   if(d.tab){micStop();view.tab=d.tab;view.task=null;view.sheet=false;view.say=null;view.mood=null;view.closet=false;render();return}
   if(d.kid){micStop();S.active=d.kid;view.task=null;view.say=null;view.mood=null;save();render();return}
   if(d.task){const t=k.tasks.find(x=>x.id===d.task);if(t.done>=t.times){say('You finished that one, superstar!','happy')}else{view.task=d.task;say(`Ready, set... play ${t.name}! ${FOCI[t.focus]}. My ears are up!`)}render();return}
-  if(d.sim){finishRun(d.sim,{minutes:d.sim==='good'?2:1});return}
+  if(d.sim){finishRun(d.sim,{minutes:d.sim==='good'?2:1,wrong:d.sim==='notes'?4:0});return}
   if(d.act==='home'){micStop();view.task=null;view.sheet=false;view.say=null;view.mood=null;render();return}
-  if(d.act==='earson'){say("My ears are up! Play your song, I'm listening!");render();micStart().then(ok=>{if(!ok){say("Hmm, I can't hear in here. Use the pretend buttons for now!")}render()});return}
+  if(d.act==='earson'){songStart(songFor(k.tasks.find(x=>x.id===view.task)));say("My ears are up! Play your song, I'm listening!");render();micStart().then(ok=>{if(!ok){say("Hmm, I can't hear in here. Use the pretend buttons for now!")}render()});return}
   if(d.act==='earsoff'){const enough=mic.onsets.length>=6;if(enough)micRunEnd();micStop();if(!enough)say('Okay, break time!');render();return}
   if(d.act==='showsheet'){view.sheet=true;render();return}
   if(d.act==='hidesheet'){view.sheet=false;render();return}
@@ -555,6 +832,12 @@ document.addEventListener('click',e=>{
     save();render();return}
   if(d.gate){if(+d.gate===view.gateQ.ans){view.gate=true}view.gateQ=null;render();return}
   if(d.act==='lock'){view.gate=false;render();return}
+  if(d.read){const t=k.tasks.find(x=>x.id===d.read);if(t&&k.worksheet)readSheet(t,k);return}
+  if(d.editnotes){view.editing=view.editing===d.editnotes?null:d.editnotes;render();return}
+  if(d.beat){view.edBeat=+d.beat;render();return}
+  if(d.addnote){const t=k.tasks.find(x=>x.id===d.t);const cur=songFor(t);t.notes=cur?cur.notes.map(n=>n.slice()):[];delete t.song;t.notes.push([+d.addnote,view.edBeat||1]);save();render();return}
+  if(d.undonote){const t=k.tasks.find(x=>x.id===d.undonote);const cur=songFor(t);if(cur){t.notes=cur.notes.slice(0,-1);delete t.song;save()}render();return}
+  if(d.clearnotes){const t=k.tasks.find(x=>x.id===d.clearnotes);t.notes=[];delete t.song;save();render();return}
   if(d.step){const t=k.tasks.find(x=>x.id===d.t);t.times=Math.max(1,Math.min(5,t.times+ +d.step));save();render();return}
   if(d.del){k.tasks=k.tasks.filter(x=>x.id!==d.del);save();render();return}
   if(d.act==='addtask'){k.tasks.push({id:'t'+Date.now(),name:'New song',times:3,focus:'both',done:0,stuck:0});save();render();return}
@@ -568,6 +851,7 @@ document.addEventListener('change',e=>{
   const d=e.target.dataset,k=kid();
   if(d.name){k.tasks.find(t=>t.id===d.name).name=e.target.value.trim()||'Song';save();renderTop()}
   if(d.focus){k.tasks.find(t=>t.id===d.focus).focus=e.target.value;save()}
+  if(d.apikey){const v=e.target.value.trim();if(v&&!v.startsWith('••')){S.apiKey=v;save();render()}else if(!v){S.apiKey='';save();render()}return}
   if(d.kname){S.kids.find(x=>x.id===d.kname).name=e.target.value.trim()||'Kid';S.sample=false;save();renderTop()}
   if(e.target.id==='ws'&&e.target.files[0]){
     const img=new Image(),r=new FileReader();
