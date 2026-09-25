@@ -409,8 +409,8 @@ function practiceTask(){
   const listenUI=done?`<div class="row"><button class="bigbtn" data-act="home">Next song</button></div>`
     :mic.on?`<div class="row"><span class="listening"><i></i><span id="micvu" style="display:inline-block;width:5px;height:14px;background:#FFE07A;border-radius:3px;transform-origin:bottom;transform:scaleY(.1)"></span><span id="micstate">Kitty ears are on…</span></span><button class="btn" data-act="earsoff">Stop</button></div>`
     :`<div class="row"><button class="bigbtn" data-act="earson">Kitty, listen!</button></div>
-      ${mic.err?`<p class="muted" style="text-align:center;max-width:38ch;margin:0 auto;font-size:.9rem">${mic.err==='unsupported'?'This device has no microphone I can use.':'The microphone is blocked in this preview window, so use the pretend buttons below. Real ears work in the installed app.'}</p>
-      <div class="sim"><p>Pretend the kitty heard…</p><div class="row">
+      ${mic.err?`<p class="muted" style="text-align:center;max-width:38ch;margin:0 auto;font-size:.9rem">${micErrText()}</p>`:''}
+      ${mic.err==='preview'||mic.err==='unsupported'?`<div class="sim"><p>Pretend the kitty heard…</p><div class="row">
         <button class="btn primary" data-sim="good">Steady playing</button>
         <button class="btn" data-sim="fast">Wobbly beat</button>
         <button class="btn" data-sim="stuck">Got stuck</button>${songFor(t)?'<button class="btn" data-sim="notes">Wrong notes</button>':''}</div></div>`:''}`;
@@ -733,12 +733,17 @@ const mic={on:false,err:null,raf:0,ctx:null,an:null,stream:null,
   lastFb:0,fbIdx:0,shortNudged:false};
 function micReset(){mic.onsets=[];mic.playSec=0;mic.quietSince=0;mic.stumbles=0;mic.lastLevel=0;mic.lastFb=0;mic.shortNudged=false}
 async function micStart(){
-  micReset();mic.err=null;
-  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){mic.err='unsupported';return false}
+  micReset();mic.err=null;mic.maxLevel=0;mic.startT=performance.now();mic.heard=false;mic.silentChecked=false;
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){mic.err=window.top!==window?'preview':(location.protocol==='https:'||location.hostname==='localhost')?'unsupported':'insecure';return false}
   try{
-    mic.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    // Safari only lets audio start inside the tap itself, so make the context before asking for the mic
     mic.ctx=new (window.AudioContext||window.webkitAudioContext)();
-    await mic.ctx.resume();
+    try{await mic.ctx.resume()}catch(e){}
+    let stream;
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}
+    catch(e){if(e&&(e.name==='OverconstrainedError'||e.name==='NotReadableError')){stream=await navigator.mediaDevices.getUserMedia({audio:true})}else throw e}
+    mic.stream=stream;
+    if(mic.ctx.state!=='running'){try{await mic.ctx.resume()}catch(e){}}
     const src=mic.ctx.createMediaStreamSource(mic.stream);
     const lo=mic.ctx.createBiquadFilter();lo.type='highpass';lo.frequency.value=55;
     const hi=mic.ctx.createBiquadFilter();hi.type='lowpass';hi.frequency.value=4500;
@@ -746,7 +751,17 @@ async function micStart(){
     src.connect(lo);lo.connect(hi);hi.connect(mic.an);
     mic.on=true;mic.lastTick=performance.now();micLoop();
     return true;
-  }catch(e){mic.err=e&&e.name||'denied';mic.on=false;return false}
+  }catch(e){mic.err=e&&e.name||'denied';mic.on=false;try{mic.ctx&&mic.ctx.close()}catch(x){}mic.ctx=null;return false}
+}
+function micErrText(){
+  const e=mic.err;
+  if(e==='preview')return 'The microphone is blocked in this preview window, so use the pretend buttons below. Real ears work at the app link.';
+  if(e==='insecure')return 'The microphone only works on the https app link. Open chephen.github.io/Practice-Kitty/ in Safari.';
+  if(e==='unsupported')return 'This browser cannot use the microphone. Open the app link in Safari.';
+  if(e==='NotAllowedError'||e==='SecurityError'||e==='denied')return 'The microphone is not allowed. Tap "Kitty, listen!" again and choose Allow. If no question appears, open Settings, Safari, Microphone, set it to Ask or Allow, then reopen the app.';
+  if(e==='NotFoundError')return 'No microphone was found on this device.';
+  if(e==='NotReadableError')return 'Another app is using the microphone. Close it and try again.';
+  return 'The microphone did not start ('+e+'). Tap "Kitty, listen!" to try again.';
 }
 function micStop(){
   mic.on=false;cancelAnimationFrame(mic.raf);
@@ -783,6 +798,9 @@ function micLoop(){
   mic.noise=Math.min(mic.noise*(1+dt*0.05)+1e-6, Math.max(1e-4, mic.noise*(level<mic.noise*1.5?0.995:1)+level*0.002));
   const vu=document.getElementById('micvu');
   if(vu)vu.style.transform='scaleY('+Math.min(1,level*9).toFixed(2)+')';
+  mic.maxLevel=Math.max(mic.maxLevel||0,level);
+  if(!mic.heard&&!ttsBusy()&&level>0.03){mic.heard=true;const ms=document.getElementById('micstate');if(ms)ms.textContent='I can hear you!'}
+  if(!mic.silentChecked&&t-mic.startT>8000){mic.silentChecked=true;if((mic.maxLevel||0)<0.006){const ms=document.getElementById('micstate');if(ms)ms.textContent='No sound is reaching my ears';liveSay("I can't hear anything at all. Is the microphone on?")}}
   // the kitty's own voice must not count as piano notes
   if(ttsBusy())mic.muteUntil=t+350;
   if(t<(mic.muteUntil||0)){mic.lastLevel=level;S2.pend=null;return}
@@ -866,7 +884,7 @@ document.addEventListener('click',e=>{
   if(d.task){view.newTask=null;const t=k.tasks.find(x=>x.id===d.task);if(t.done>=t.times){say('You finished that one, superstar!','happy')}else{view.task=d.task;say(`Ready, set... play ${t.name}! ${FOCI[t.focus]}. My ears are up!`)}render();return}
   if(d.sim){finishRun(d.sim,{minutes:d.sim==='good'?2:1,wrong:d.sim==='notes'?4:0});return}
   if(d.act==='home'){micStop();view.task=null;view.sheet=false;view.say=null;view.mood=null;render();return}
-  if(d.act==='earson'){songStart(songFor(k.tasks.find(x=>x.id===view.task)));say("My ears are up! Play your song, I'm listening!");render();micStart().then(ok=>{if(!ok){say("Hmm, I can't hear in here. Use the pretend buttons for now!")}render()});return}
+  if(d.act==='earson'){songStart(songFor(k.tasks.find(x=>x.id===view.task)));say("My ears are up! Play your song, I'm listening!");render();micStart().then(ok=>{if(!ok){say(mic.err==='preview'||mic.err==='unsupported'?"Hmm, I can't hear in here. Use the pretend buttons for now!":"Hmm, my ears aren't working. Can a grown-up turn on the microphone?")}render()});return}
   if(d.act==='earsoff'){const enough=mic.onsets.length>=6;if(enough)micRunEnd();micStop();if(!enough)say('Okay, break time!');render();return}
   if(d.act==='showsheet'){view.sheet=true;render();return}
   if(d.act==='hidesheet'){view.sheet=false;render();return}
