@@ -1,0 +1,493 @@
+<title>Practice Kitty</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Practice Kitty">
+<meta name="theme-color" content="#EAF4EE">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#FFF6E8; --bg2:#FFE9D0; --card:#FFFFFF; --ink:#4A3B30; --muted:#93806F; --line:#F4DFC6;
+  --felt:#F2708C; --felt-dark:#D14E6C; --teal:#3FB58F; --teal-soft:#DDF3EA;
+  --gold:#FFB94A; --gold-soft:#FFF1D6;
+  --fur:#FFD8A8; --fur-dark:#FFB870; --fur-light:#FFF3DF; --pink:#FFB3C1; --pink-soft:#FFE4EA;
+  --sky:#8FC7F2; --plum:#B48FE0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,#FFF9EF,#FFEEDA 70%,#FFE7CC);color:var(--ink);font:17px/1.4 "Nunito",ui-rounded,system-ui,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--felt);outline-offset:2px}
+h1,h2,h3,.display{font-family:"Baloo 2","Nunito",ui-rounded,system-ui,sans-serif;margin:0;line-height:1.1;text-wrap:balance}
+.app{height:100%;display:flex;flex-direction:column;max-width:900px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 6px}
+.kids{display:flex;gap:8px;flex-wrap:wrap}
+.kidchip{display:flex;align-items:center;gap:6px;padding:6px 12px 6px 6px;border-radius:99px;background:var(--card);border:2px solid transparent;font-weight:800}
+.kidchip[aria-pressed="true"]{border-color:var(--felt)}
+.kidchip .dot{width:26px;height:26px;border-radius:50%}
+.wallet{display:flex;gap:8px}
+.coin{display:flex;align-items:center;gap:5px;background:var(--card);padding:5px 11px;border-radius:99px;font-weight:800;font-variant-numeric:tabular-nums}
+.coin svg{width:22px;height:22px}
+main{flex:1;overflow-y:auto;padding:6px 16px 20px}
+.tabs{display:flex;justify-content:space-around;background:var(--card);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:800;font-size:.85rem;color:var(--muted);padding:4px 18px;border-radius:14px}
+.tab svg{width:30px;height:30px}
+.tab[aria-selected="true"]{color:var(--felt);background:var(--bg)}
+.screen{display:flex;flex-direction:column;gap:16px}
+.stage{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.kitty{width:min(62vw,300px);height:auto;max-width:100%;touch-action:manipulation}
+.speech{background:var(--card);border:3px solid var(--pink-soft);border-radius:24px;padding:12px 18px;font-weight:800;font-size:1.15rem;text-align:center;max-width:32ch;position:relative;box-shadow:0 2px 0 var(--line)}
+.speech::after{content:"";position:absolute;left:50%;bottom:-10px;margin-left:-10px;border:10px solid transparent;border-top-color:var(--card);border-bottom:0}
+.streak{display:flex;gap:6px;justify-content:center}
+.streak span{width:30px;height:30px;border-radius:50%;background:var(--bg2);display:grid;place-items:center;font-size:.72rem;font-weight:800;color:var(--muted)}
+.streak span.on{background:var(--gold);color:#fff;box-shadow:0 0 0 3px var(--gold-soft)}
+.tasks{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.task{display:flex;align-items:center;gap:14px;background:var(--card);border-radius:26px;padding:14px 16px;text-align:left;box-shadow:0 4px 0 var(--line),0 10px 24px rgba(212,160,100,.12);min-height:88px}
+.task:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.task .ic{width:56px;height:56px;border-radius:50%;background:var(--teal-soft);display:grid;place-items:center;flex:none}
+.task .ic svg{width:34px;height:34px}
+.task b{font-family:"Baloo 2",sans-serif;font-size:1.25rem;display:block;line-height:1.1}
+.task small{color:var(--muted);font-weight:700}
+.task.done{opacity:.72}
+.task.done .ic{background:var(--teal);color:#fff}
+.pips{display:flex;gap:5px;margin-top:6px}
+.pips i{width:14px;height:14px;border-radius:50%;background:var(--bg2)}
+.pips i.on{background:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.bigbtn{background:var(--felt);color:#fff;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:1.5rem;padding:14px 34px;border-radius:99px;box-shadow:0 5px 0 var(--felt-dark)}
+.bigbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--felt-dark)}
+.bigbtn:disabled{opacity:.45}
+.btn{background:var(--card);border:2px solid var(--line);font-weight:800;padding:10px 16px;border-radius:14px}
+.btn.primary{background:var(--felt);border-color:var(--felt);color:#fff}
+.btn.danger{color:#B23A48}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+.sim{border:2px dashed var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center;background:rgba(255,255,255,.45)}
+.sim p{margin:0;font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.back{align-self:flex-start;font-weight:800;color:var(--felt);padding:6px 0}
+.listening{display:inline-flex;align-items:center;gap:8px;background:var(--felt);color:#fff;border-radius:99px;padding:6px 14px;font-weight:800;font-size:.9rem}
+.listening i{width:10px;height:10px;border-radius:50%;background:#FFE07A;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.careRow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:520px}
+.care{background:var(--card);border-radius:24px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:800;box-shadow:0 4px 0 var(--line),0 10px 24px rgba(212,160,100,.12)}
+.care svg{width:40px;height:40px}
+.care small{color:var(--muted);font-weight:700;font-size:.78rem}
+.closet{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;width:100%}
+.item{background:var(--card);border-radius:18px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px;border:3px solid transparent;font-weight:800;font-size:.9rem}
+.item svg{width:64px;height:48px}
+.item[aria-pressed="true"]{border-color:var(--gold)}
+.item .price{display:flex;align-items:center;gap:3px;color:var(--muted);font-size:.8rem}
+.item .price svg{width:16px;height:16px}
+.item.locked{opacity:.6}
+h2{font-size:1.6rem}
+.panel{background:var(--card);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.2rem}
+.muted{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:14px;padding:10px;text-align:center}
+.stat b{display:block;font-family:"Baloo 2",sans-serif;font-size:1.7rem;font-variant-numeric:tabular-nums;line-height:1}
+.stat span{font-size:.8rem;color:var(--muted);font-weight:700}
+.log{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.log li{display:flex;gap:10px;align-items:baseline;font-size:.95rem}
+.log time{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;min-width:4.2em}
+.flag{display:inline-block;background:var(--pink-soft);color:#A33A4C;border-radius:8px;padding:0 7px;font-weight:800;font-size:.8rem}
+.edit{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.edit:first-of-type{border-top:0}
+input[type=text],select{font:inherit;padding:9px 12px;border-radius:12px;border:2px solid var(--line);background:#fff;min-width:0;width:100%}
+.stepper{display:flex;align-items:center;gap:4px;font-weight:800;font-variant-numeric:tabular-nums}
+.stepper button{width:34px;height:34px;border-radius:10px;background:var(--bg);font-weight:800;font-size:1.2rem}
+.focusline{grid-column:1/-1;display:flex;gap:8px}
+.worksheet{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.worksheet img{width:120px;height:90px;object-fit:cover;border-radius:12px;border:2px solid var(--line)}
+.wsph{width:120px;height:90px;border-radius:12px;border:2px dashed var(--line);display:grid;place-items:center;color:var(--muted);font-weight:700;font-size:.8rem;text-align:center;padding:6px}
+.gate{display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:30px;text-align:center}
+.gate .q{font-family:"Baloo 2",sans-serif;font-size:2.2rem}
+.demo{font-size:.78rem;background:var(--gold-soft);color:#7A5A12;border-radius:8px;padding:2px 8px;font-weight:800}
+.hearts{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.heart{position:absolute;width:28px;height:28px;animation:float 1.4s ease-out forwards}
+@keyframes float{from{transform:translateY(0) scale(.6);opacity:1}to{transform:translateY(-140px) scale(1.2);opacity:0}}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:5}
+.kbody{transform-origin:100px 170px;animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.02,.985)}}
+.ktail{transform-origin:140px 160px;animation:wag 2.4s ease-in-out infinite}
+@keyframes wag{50%{transform:rotate(12deg)}}
+.kears{transition:transform .3s}
+@media (prefers-reduced-motion:reduce){.kbody,.ktail,.listening i{animation:none}.heart{animation-duration:.01s}}
+@media (min-width:700px){.kitty{width:300px}.top{padding-inline:24px}main{padding-inline:24px}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="kids" id="kids" role="group" aria-label="Who is practicing"></div>
+    <div class="wallet" id="wallet"></div>
+  </header>
+  <main id="main"></main>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-tab="practice"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><rect x="4" y="8" width="24" height="17" rx="3"/><path d="M10 8v11M16 8v11M22 8v11" /><rect x="8.5" y="8" width="3" height="7" fill="currentColor"/><rect x="20.5" y="8" width="3" height="7" fill="currentColor"/></svg>Practice</button>
+    <button class="tab" role="tab" data-tab="kitty"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M7 6l4 6h10l4-6 1 12a10 9 0 0 1-20 0z"/><circle cx="12.5" cy="17" r="1.3" fill="currentColor"/><circle cx="19.5" cy="17" r="1.3" fill="currentColor"/></svg>Kitty</button>
+    <button class="tab" role="tab" data-tab="parent"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><rect x="7" y="14" width="18" height="13" rx="3"/><path d="M11 14v-3a5 5 0 0 1 10 0v3"/></svg>Grown-ups</button>
+  </nav>
+</div>
+<div class="confetti" id="confetti" hidden></div>
+
+<script>
+/* ---------- icons ---------- */
+const FISH='<svg viewBox="0 0 24 24"><path d="M3 12c3-5 9-6 13-2l4-3v10l-4-3c-4 4-10 3-13-2z" fill="#7FB7E6"/><circle cx="8" cy="11" r="1.3" fill="#22302A"/></svg>';
+const STAR='<svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="#FFB94A"/></svg>';
+const NOTE='<svg viewBox="0 0 24 24" fill="#3FB58F"><path d="M9 17.5a3 3 0 1 1-2-2.8V4l11-2v12.5a3 3 0 1 1-2-2.8V6.2L9 7.5z"/></svg>';
+const SCALE='<svg viewBox="0 0 24 24" fill="#3FB58F"><rect x="2" y="16" width="4" height="5" rx="1"/><rect x="7" y="12" width="4" height="9" rx="1"/><rect x="12" y="8" width="4" height="13" rx="1"/><rect x="17" y="4" width="4" height="17" rx="1"/></svg>';
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const HEART='<svg viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z" fill="#F07C8E"/></svg>';
+const HAND='<svg viewBox="0 0 48 48"><path d="M14 26V12a3 3 0 0 1 6 0v10V8a3 3 0 0 1 6 0v14V10a3 3 0 0 1 6 0v14-8a3 3 0 0 1 6 0v14c0 8-6 14-13 14-5 0-8-2-11-6l-7-9a3 3 0 0 1 5-3z" fill="#FFD9B0" stroke="#D9803A" stroke-width="2"/></svg>';
+const BOWL='<svg viewBox="0 0 48 48"><path d="M6 24h36a18 12 0 0 1-36 0z" fill="#9A6FD0"/><path d="M14 22c2-4 7-5 10-2l3-2v7l-3-2c-3 3-8 2-10-1z" fill="#7FB7E6"/></svg>';
+const SHIRT='<svg viewBox="0 0 48 48"><path d="M16 8l-10 6 4 8 5-3v21h18V19l5 3 4-8-10-6c-1 3-4 5-8 5s-7-2-8-5z" fill="#F07C8E"/></svg>';
+const FOCI={right:'Right hand',left:'Left hand',both:'Both hands',slow:'Nice and slow',loud:'Soft and loud'};
+
+/* ---------- kitty accessories ---------- */
+const ITEMS=[
+  {id:'bow',name:'Pink bow',cost:1,svg:'<g transform="translate(134 50) rotate(18)"><path d="M0 0C-6-12-20-14-22-6c-2 8 12 10 22 6zM0 0c6-12 20-14 22-6 2 8-12 10-22 6z" fill="#FF8BA0"/><circle r="6" fill="#E85D7E"/></g>'},
+  {id:'glasses',name:'Round glasses',cost:2,svg:'<g fill="none" stroke="#5B4636" stroke-width="4"><circle cx="80" cy="92" r="16"/><circle cx="120" cy="92" r="16"/><path d="M96 92h8"/></g>'},
+  {id:'scarf',name:'Cozy scarf',cost:2,svg:'<g><path d="M56 138c26 14 62 14 88 0l3 14c-30 16-64 16-94 0z" fill="#8FC7F2"/><path d="M124 150l10 28-14 3-8-27z" fill="#6FAEE0"/></g>'},
+  {id:'hat',name:'Party hat',cost:3,svg:'<g><path d="M100 2L80 48h40z" fill="#B48FE0"/><path d="M91 24h18M86 36h28" stroke="#FFB94A" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="4" r="6" fill="#FFB94A"/></g>'},
+  {id:'flower',name:'Daisy',cost:3,svg:'<g transform="translate(62 52)"><g fill="#fff" stroke="#F0E4D2"><circle cx="0" cy="-9" r="6.5"/><circle cx="9" cy="0" r="6.5"/><circle cx="0" cy="9" r="6.5"/><circle cx="-9" cy="0" r="6.5"/></g><circle r="5.5" fill="#FFB94A"/></g>'},
+  {id:'crown',name:'Gold crown',cost:5,svg:'<g><path d="M76 46l4-28 14 14 6-20 6 20 14-14 4 28z" fill="#FFB94A" stroke="#E09A2A" stroke-width="2.5" stroke-linejoin="round"/><circle cx="100" cy="36" r="4.5" fill="#FF8BA0"/></g>'},
+];
+function itemPreview(it){return `<svg viewBox="34 -4 132 168" aria-hidden="true">${kittySVG({mini:true,wear:[it.id]})}</svg>`}
+
+/* ---------- kitty drawing ---------- */
+function kittySVG(o={}){
+  const wear=(o.wear||[]).map(id=>ITEMS.find(i=>i.id===id)?.svg||'').join('');
+  const eyes=o.mood==='happy'
+    ? '<path d="M69 92q11-14 22 0M109 92q11-14 22 0" stroke="#5B4636" stroke-width="5.5" fill="none" stroke-linecap="round"/>'
+    : o.mood==='sleepy'
+    ? '<path d="M71 94h18M111 94h18" stroke="#5B4636" stroke-width="5.5" stroke-linecap="round"/>'
+    : `<g><ellipse cx="80" cy="93" rx="11.5" ry="14" fill="#4A3626"/><ellipse cx="120" cy="93" rx="11.5" ry="14" fill="#4A3626"/>
+       <circle cx="84.5" cy="88" r="4.5" fill="#fff"/><circle cx="124.5" cy="88" r="4.5" fill="#fff"/>
+       <circle cx="76.5" cy="98" r="2.2" fill="#fff" opacity=".85"/><circle cx="116.5" cy="98" r="2.2" fill="#fff" opacity=".85"/></g>`;
+  const body=o.mini?'':`
+    <ellipse cx="100" cy="187" rx="52" ry="9" fill="#C98A4B" opacity=".18"/>
+    <g class="ktail"><path d="M147 156c26-2 36-24 21-40" stroke="#FFB870" stroke-width="15" fill="none" stroke-linecap="round"/></g>
+    <path d="M60 128c-8 26 4 54 40 54s48-28 40-54z" fill="#FFD8A8"/>
+    <ellipse cx="100" cy="164" rx="23" ry="15" fill="#FFF3DF"/>
+    <ellipse cx="76" cy="177" rx="13" ry="8.5" fill="#FFE7C6"/>
+    <ellipse cx="124" cy="177" rx="13" ry="8.5" fill="#FFE7C6"/>
+    <path d="M72 177h4M78 173v4M120 177h4M126 173v4" stroke="#EFB273" stroke-width="2.4" stroke-linecap="round"/>`;
+  return `<g class="kbody">${body}
+    <g class="kears" style="transform-origin:100px 66px;transform:${o.listening?'scale(1,1.14)':'none'}">
+      <path d="M53 76C45 46 55 28 66 24c9-3 22 7 28 18z" fill="#FFD8A8"/>
+      <path d="M147 76c8-30-2-48-13-52-9-3-22 7-28 18z" fill="#FFD8A8"/>
+      <path d="M62 64c-3-17 4-27 10-29 6-2 13 5 17 12z" fill="#FFB3C1"/>
+      <path d="M138 64c3-17-4-27-10-29-6-2-13 5-17 12z" fill="#FFB3C1"/>
+    </g>
+    <circle cx="100" cy="98" r="57" fill="#FFD8A8"/>
+    <path d="M84 44q16-9 32 0l-7 13q-9-4-18 0z" fill="#FFB870"/>
+    <circle cx="64" cy="113" r="10" fill="#FFB3C1" opacity=".65"/>
+    <circle cx="136" cy="113" r="10" fill="#FFB3C1" opacity=".65"/>
+    ${eyes}
+    <path d="M95.5 105h9l-4.5 5.5z" fill="#FF8BA0"/>
+    <path d="M100 110q-4 8-12 4.5M100 110q4 8 12 4.5" stroke="#5B4636" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+    <g stroke="#EBBE90" stroke-width="2.2" stroke-linecap="round"><path d="M56 108l-15-2M57 115l-14 4M144 108l15-2M143 115l14 4"/></g>
+    ${wear}
+  </g>`;
+}
+
+/* ---------- state ---------- */
+const KEY='practice-kitty-v1';
+const today=()=>new Date().toISOString().slice(0,10);
+function sample(){
+  return {
+    active:'k1', sound:true,
+    kids:[
+      {id:'k1',name:'Lulu',color:'#F2A25C',fish:3,stars:4,owned:['bow'],wearing:['bow'],fed:0,streak:[1,1,0,1,1,1,0],
+       tasks:[
+         {id:'t1',name:'Twinkle Twinkle',times:3,focus:'right',done:0,stuck:0},
+         {id:'t2',name:'C major scale',times:2,focus:'slow',done:2,stuck:0},
+         {id:'t3',name:'Hot Cross Buns',times:3,focus:'both',done:0,stuck:0}],
+       log:[{t:'4:02 PM',text:'C major scale, 2 of 2 run-throughs, steady beat'},{t:'3:58 PM',text:'C major scale, 1 run-through, rushed (♩≈118, aim 80)'}],
+       minutes:6, worksheet:null},
+      {id:'k2',name:'Max',color:'#9A6FD0',fish:1,stars:1,owned:[],wearing:[],fed:0,streak:[0,1,1,0,1,0,0],
+       tasks:[{id:'t4',name:'Middle C march',times:3,focus:'left',done:0,stuck:0}],
+       log:[],minutes:0,worksheet:null}
+    ],
+    day:today(), sample:true
+  };
+}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.kids)S=sample();
+if(S.day!==today()){S.kids.forEach(k=>{k.tasks.forEach(t=>{t.done=0;t.stuck=0});k.log=[];k.minutes=0;k.fed=0});S.day=today()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const kid=()=>S.kids.find(k=>k.id===S.active)||S.kids[0];
+
+let view={tab:'practice',task:null,say:null,mood:null,gate:false,gateQ:null};
+
+/* ---------- speech ---------- */
+let VOICE=null;
+function pickVoice(){
+  try{
+    const vs=speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.toLowerCase().startsWith('en'));
+    const wish=['Samantha','Karen','Moira','Tessa','Martha','Google US English','Jenny','Aria','Zira','Female'];
+    for(const w of wish){const v=vs.find(x=>x.name.includes(w));if(v){VOICE=v;return}}
+    VOICE=vs[0]||null;
+  }catch(e){}
+}
+try{speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}catch(e){}
+function speak(txt){
+  if(!S.sound)return;
+  try{
+    const clean=txt.replace(/♩≈\d+[^)]*\)?/g,'').replace(/\(aim \d+\)/g,'');
+    const u=new SpeechSynthesisUtterance(clean);
+    if(!VOICE)pickVoice();
+    if(VOICE)u.voice=VOICE;
+    u.rate=.9;u.pitch=1.5;
+    speechSynthesis.cancel();speechSynthesis.speak(u);
+  }catch(e){}
+}
+function say(txt,mood){view.say=txt;view.mood=mood||null;speak(txt)}
+
+/* ---------- render ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderTop(){
+  $('#kids').innerHTML=S.kids.map(k=>`<button class="kidchip" aria-pressed="${k.id===S.active}" data-kid="${k.id}"><span class="dot" style="background:${k.color}"></span>${esc(k.name)}</button>`).join('');
+  const k=kid();
+  $('#wallet').innerHTML=`<span class="coin" title="Fish treats">${FISH}${k.fish}</span><span class="coin" title="Stars">${STAR}${k.stars}</span>`;
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.tab===view.tab));
+}
+function kittyStage(extra=''){
+  const k=kid();
+  return `<div class="stage">
+    ${view.say?`<div class="speech" aria-live="polite">${esc(view.say)}</div>`:''}
+    <svg class="kitty" id="kitty" viewBox="0 0 200 200" role="img" aria-label="${esc(k.name)}'s kitty">${kittySVG({mood:view.mood,listening:mic.on,wear:k.wearing})}</svg>
+    <div class="hearts" id="hearts"></div>${extra}</div>`;
+}
+function practiceHome(){
+  const k=kid();
+  const left=k.tasks.filter(t=>t.done<t.times).length;
+  if(!view.say)view.say=left?`Meow meow, ${k.name}! ${left===1?'One little song':left+' songs'} for today!`:`All done today, ${k.name}! Come snuggle me!`;
+  const days=['M','T','W','T','F','S','S'];
+  return `<div class="screen">${kittyStage()}
+    <div class="streak" aria-label="This week">${k.streak.map((d,i)=>`<span class="${d?'on':''}">${days[i]}</span>`).join('')}</div>
+    <div class="tasks">${k.tasks.map(t=>{const done=t.done>=t.times;return `<button class="task ${done?'done':''}" data-task="${t.id}">
+      <span class="ic">${done?CHECK:(/scale/i.test(t.name)?SCALE:NOTE)}</span>
+      <span><b>${esc(t.name)}</b><small>${FOCI[t.focus]||''}</small>
+      <span class="pips">${Array.from({length:t.times},(_,i)=>`<i class="${i<t.done?'on':''}"></i>`).join('')}</span></span></button>`}).join('')}</div>
+    ${k.tasks.length?'':'<p class="muted" style="text-align:center">No homework yet. A grown-up can add songs and this week\'s music sheet under Grown-ups.</p>'}
+    ${k.worksheet?`<div class="row"><button class="btn" data-act="gosheet"><img src="${k.worksheet}" alt="" style="width:44px;height:32px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">This week's music</button></div>`:''}
+  </div>`;
+}
+function practiceTask(){
+  const k=kid();
+  const t=k.tasks.find(x=>x.id===view.task);
+  const done=t.done>=t.times;
+  const listenUI=done?`<div class="row"><button class="bigbtn" data-act="home">Next song</button></div>`
+    :mic.on?`<div class="row"><span class="listening"><i></i><span id="micstate">Kitty ears are on…</span></span><button class="btn" data-act="earsoff">Stop</button></div>`
+    :`<div class="row"><button class="bigbtn" data-act="earson">Kitty, listen!</button></div>
+      ${mic.err?`<p class="muted" style="text-align:center;max-width:38ch;margin:0 auto;font-size:.9rem">${mic.err==='unsupported'?'This device has no microphone I can use.':'The microphone is blocked in this preview window, so use the pretend buttons below. Real ears work in the installed app.'}</p>
+      <div class="sim"><p>Pretend the kitty heard…</p><div class="row">
+        <button class="btn primary" data-sim="good">Steady playing</button>
+        <button class="btn" data-sim="fast">Wobbly beat</button>
+        <button class="btn" data-sim="stuck">Got stuck</button></div></div>`:''}`;
+  return `<div class="screen"><button class="back" data-act="home">‹ All songs</button>
+    ${view.sheet&&k.worksheet?`<div class="panel" style="align-items:center"><img src="${k.worksheet}" alt="Music sheet" style="max-width:100%;border-radius:12px"><button class="btn primary" data-act="hidesheet">Back to my kitty</button></div>`:`
+    ${kittyStage()}
+    <div style="text-align:center"><h2>${esc(t.name)}</h2><div class="pips" style="justify-content:center;margin-top:8px">${Array.from({length:t.times},(_,i)=>`<i class="${i<t.done?'on':''}" style="width:22px;height:22px"></i>`).join('')}</div>
+    ${k.worksheet?`<div style="margin-top:10px"><button class="btn" data-act="showsheet">See my music</button></div>`:''}</div>
+    ${listenUI}`}
+  </div>`;
+}
+function kittyScreen(){
+  const k=kid();
+  if(!view.say)view.say=k.fed?'Mmm, my tummy is happy! Pets please?':'Meow… my tummy is rumbly.';
+  return `<div class="screen" style="align-items:center">${kittyStage()}
+    <div class="careRow">
+      <button class="care" data-act="pet">${HAND}Pet<small>free</small></button>
+      <button class="care" data-act="feed">${BOWL}Feed<small>1 fish</small></button>
+      <button class="care" data-act="closet">${SHIRT}Dress up<small>stars</small></button>
+    </div>
+    ${view.closet?`<div class="closet">${ITEMS.map(it=>{const own=k.owned.includes(it.id);return `<button class="item ${own||k.stars>=it.cost?'':'locked'}" aria-pressed="${k.wearing.includes(it.id)}" data-item="${it.id}">${itemPreview(it)}${it.name}<span class="price">${own?(k.wearing.includes(it.id)?'Wearing':'Put on'):STAR+it.cost}</span></button>`}).join('')}</div>`:''}
+  </div>`;
+}
+function gate(){
+  if(!view.gateQ){const a=6+Math.floor(Math.random()*4),b=3+Math.floor(Math.random()*5);const ans=a*b;const opts=[ans,ans+a,ans-b].sort(()=>Math.random()-.5);view.gateQ={a,b,ans,opts}}
+  const q=view.gateQ;
+  return `<div class="gate"><h2>Grown-ups only</h2><p class="muted">Tap the answer to keep going.</p><div class="q">${q.a} × ${q.b} = ?</div>
+    <div class="row">${q.opts.map(o=>`<button class="btn" style="min-width:80px;font-size:1.3rem" data-gate="${o}">${o}</button>`).join('')}</div></div>`;
+}
+function parent(){
+  if(!view.gate)return gate();
+  const k=kid();
+  const runs=k.tasks.reduce((a,t)=>a+t.done,0), stuck=k.tasks.reduce((a,t)=>a+t.stuck,0);
+  return `<div class="screen">
+    ${S.sample?'<div><span class="demo">Sample data: Lulu and Max are example kids. Rename them or reset below.</span></div>':''}
+    <div class="panel"><h3>${esc(k.name)} today</h3>
+      <div class="stats"><div class="stat"><b>${k.minutes}</b><span>minutes playing</span></div><div class="stat"><b>${runs}</b><span>run-throughs</span></div><div class="stat"><b>${stuck}</b><span>stuck spots</span></div></div>
+      ${k.log.length?`<ul class="log">${k.log.map(l=>`<li><time>${esc(l.t)}</time><span>${esc(l.text).replace(/(stuck[^,]*)/,'<span class="flag">$1</span>')}</span></li>`).join('')}</ul>`:'<p class="muted" style="margin:0">No practice yet today.</p>'}
+    </div>
+    <div class="panel"><h3>This week's music sheet &amp; songs</h3>
+      <div class="worksheet">${k.worksheet?`<img src="${k.worksheet}" alt="Worksheet photo">`:'<div class="wsph">No music sheet yet. Snap a photo of the teacher\'s page.</div>'}
+        <label class="btn primary" for="ws">Upload music sheet photo</label><input id="ws" type="file" accept="image/*" hidden></div>
+      <div>${k.tasks.map(t=>`<div class="edit" data-row="${t.id}">
+        <input type="text" id="n-${t.id}" value="${esc(t.name)}" data-name="${t.id}" aria-label="Song name">
+        <div class="stepper" aria-label="Times to play"><button data-step="-1" data-t="${t.id}">−</button><span>${t.times}×</span><button data-step="1" data-t="${t.id}">+</button></div>
+        <button class="btn danger" data-del="${t.id}" aria-label="Remove">Remove</button>
+        <div class="focusline"><select id="f-${t.id}" data-focus="${t.id}" aria-label="Focus">${Object.entries(FOCI).map(([v,l])=>`<option value="${v}" ${t.focus===v?'selected':''}>${l}</option>`).join('')}</select></div></div>`).join('')}</div>
+      <div class="row" style="justify-content:flex-start"><button class="btn primary" data-act="addtask">Add a song</button></div>
+    </div>
+    <div class="panel"><h3>Kids</h3>
+      ${S.kids.map(x=>`<div class="edit" style="grid-template-columns:auto 1fr"><span class="dot" style="width:26px;height:26px;border-radius:50%;background:${x.color}"></span><input type="text" id="kn-${x.id}" value="${esc(x.name)}" data-kname="${x.id}" aria-label="Nickname"></div>`).join('')}
+      <p class="muted" style="margin:0;font-size:.9rem">Use a nickname. Practice Kitty never records or saves sound, and everything stays on this device.</p>
+      <div class="row" style="justify-content:flex-start"><button class="btn" data-act="addkid">Add a kid</button><button class="btn" data-act="sound">Kitty voice: ${S.sound?'on':'off'}</button><button class="btn danger" data-act="reset">Reset sample data</button></div>
+    </div>
+    <div class="row"><button class="btn" data-act="lock">Lock grown-up area</button></div>
+  </div>`;
+}
+function render(){
+  renderTop();
+  const m=$('#main');
+  m.innerHTML=view.tab==='practice'?(view.task?practiceTask():practiceHome()):view.tab==='kitty'?kittyScreen():parent();
+}
+
+/* ---------- effects ---------- */
+function hearts(n=5){const h=$('#hearts');if(!h)return;for(let i=0;i<n;i++){const d=document.createElement('div');d.className='heart';d.innerHTML=HEART;d.style.left=(30+Math.random()*40)+'%';d.style.top=(35+Math.random()*25)+'%';d.style.animationDelay=(i*.12)+'s';h.appendChild(d);setTimeout(()=>d.remove(),2000)}}
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const c=$('#confetti');c.hidden=false;c.innerHTML='<canvas style="width:100%;height:100%"></canvas>';
+  const cv=c.firstChild,ctx=cv.getContext('2d'),W=cv.width=innerWidth,H=cv.height=innerHeight;
+  const cols=['#E3A62F','#F07C8E','#7FB7E6','#2E6B57','#9A6FD0'];
+  const ps=Array.from({length:90},()=>({x:W/2,y:H/2.4,vx:(Math.random()-.5)*12,vy:-Math.random()*12-4,c:cols[Math.random()*5|0],r:Math.random()*6+4}));
+  let f=0;(function tick(){ctx.clearRect(0,0,W,H);ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,p.r,p.r*.6)});if(++f<90)requestAnimationFrame(tick);else c.hidden=true})();
+}
+const now=()=>new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+
+/* ---------- shared run result ---------- */
+function finishRun(kind,info={}){
+  const k=kid();const t=k.tasks.find(x=>x.id===view.task);if(!t)return;
+  const mins=Math.max(1,Math.round(info.minutes||1));
+  k.minutes+=mins;
+  if(kind==='good'){t.done++;k.log.unshift({t:now(),text:`${t.name}, run-through ${t.done} of ${t.times}, steady beat`});
+    if(t.done>=t.times){k.fish++;say(`Yippee, you did it! You won a fishy for me!`,'happy');confetti();
+      if(k.tasks.every(x=>x.done>=x.times)){k.stars++;k.streak[(new Date().getDay()+6)%7]=1;setTimeout(()=>{say('Hooray! All your songs are done! You get a shiny star!','happy');render()},1800)}}
+    else say(`Purr-fect! That's ${t.done} of ${t.times}! Again, again!`,'happy')}
+  if(kind==='fast'){k.log.unshift({t:now(),text:`${t.name}, wobbly beat, trying again`});say('Whoa, wobbly paws! Let\'s play it again, slooow and steady like a sleepy kitty.')}
+  if(kind==='stuck'){t.stuck++;k.log.unshift({t:now(),text:`${t.name}, stuck in the middle, restarted`});say('Ooh, a tricky bit! Play just that part three times, teeny tiny slow.')}
+  save();render();
+}
+
+/* ---------- real listening (Web Audio) ---------- */
+const mic={on:false,err:null,raf:0,ctx:null,an:null,stream:null,
+  noise:1e-4,onsets:[],playSec:0,lastTick:0,lastLevel:0,quietSince:0,stumbles:0};
+function micReset(){mic.onsets=[];mic.playSec=0;mic.quietSince=0;mic.stumbles=0;mic.lastLevel=0}
+async function micStart(){
+  micReset();mic.err=null;
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){mic.err='unsupported';return false}
+  try{
+    mic.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    mic.ctx=new (window.AudioContext||window.webkitAudioContext)();
+    await mic.ctx.resume();
+    const src=mic.ctx.createMediaStreamSource(mic.stream);
+    const lo=mic.ctx.createBiquadFilter();lo.type='highpass';lo.frequency.value=55;
+    const hi=mic.ctx.createBiquadFilter();hi.type='lowpass';hi.frequency.value=4500;
+    mic.an=mic.ctx.createAnalyser();mic.an.fftSize=2048;mic.an.smoothingTimeConstant=.3;
+    src.connect(lo);lo.connect(hi);hi.connect(mic.an);
+    mic.on=true;mic.lastTick=performance.now();micLoop();
+    return true;
+  }catch(e){mic.err=e&&e.name||'denied';mic.on=false;return false}
+}
+function micStop(){
+  mic.on=false;cancelAnimationFrame(mic.raf);
+  try{mic.stream&&mic.stream.getTracks().forEach(t=>t.stop())}catch(e){}
+  try{mic.ctx&&mic.ctx.close()}catch(e){}
+  mic.ctx=mic.an=mic.stream=null;
+}
+function micLoop(){
+  if(!mic.on)return;
+  const buf=new Uint8Array(mic.an.frequencyBinCount);
+  mic.an.getByteFrequencyData(buf);
+  // average energy across piano band
+  let sum=0;for(let i=2;i<buf.length*0.6;i++)sum+=buf[i];
+  const level=sum/(buf.length*0.6)/255;
+  const t=performance.now();
+  const dt=(t-mic.lastTick)/1000;mic.lastTick=t;
+  // adaptive noise floor
+  mic.noise=Math.min(mic.noise*(1+dt*0.05)+1e-6, Math.max(1e-4, mic.noise*(level<mic.noise*1.5?0.995:1)+level*0.002));
+  const active=level>Math.max(0.035,mic.noise*2.5);
+  if(active){
+    mic.playSec+=dt;mic.quietSince=0;
+    // onset: sharp rise over recent level
+    if(level>mic.lastLevel*1.6&&level>0.05){
+      const last=mic.onsets[mic.onsets.length-1]||0;
+      if(t-last>120)mic.onsets.push(t);
+    }
+  }else if(mic.onsets.length){
+    mic.quietSince+=dt;
+    // mid-run stumble: pause 1.5-3.5s then (resumption detected next active frame)
+    if(mic.quietSince>1.6&&mic.quietSince<1.7&&mic.onsets.length>=5)mic.stumbles++;
+    if(mic.quietSince>3.5&&mic.onsets.length>=10){micRunEnd();return}
+    if(mic.quietSince>8&&mic.onsets.length<10){micReset()} // noise blip, start over
+  }
+  mic.lastLevel=level*0.6+mic.lastLevel*0.4;
+  // live UI
+  const el=document.getElementById('micstate');
+  if(el)el.textContent=mic.onsets.length? '♪ '+mic.onsets.length+' notes heard':'Kitty ears are on…';
+  mic.raf=requestAnimationFrame(micLoop);
+}
+function micRunEnd(){
+  // steadiness from inter-onset intervals
+  const io=[];for(let i=1;i<mic.onsets.length;i++){const d=(mic.onsets[i]-mic.onsets[i-1])/1000;if(d>=0.12&&d<=1.6)io.push(d)}
+  let kind='good';
+  if(io.length>=6){
+    const mean=io.reduce((a,b)=>a+b,0)/io.length;
+    const sd=Math.sqrt(io.reduce((a,b)=>a+(b-mean)**2,0)/io.length);
+    if(mic.stumbles>=2)kind='stuck';
+    else if(sd/mean>0.55)kind='fast';
+  }
+  const mins=mic.playSec/60;
+  micReset();
+  finishRun(kind,{minutes:Math.max(1,Math.round(mins))});
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const k=kid(),d=b.dataset;
+  if(d.tab){micStop();view.tab=d.tab;view.task=null;view.sheet=false;view.say=null;view.mood=null;view.closet=false;render();return}
+  if(d.kid){micStop();S.active=d.kid;view.task=null;view.say=null;view.mood=null;save();render();return}
+  if(d.task){const t=k.tasks.find(x=>x.id===d.task);if(t.done>=t.times){say('You finished that one, superstar!','happy')}else{view.task=d.task;say(`Ready, set... play ${t.name}! ${FOCI[t.focus]}. My ears are up!`)}render();return}
+  if(d.sim){finishRun(d.sim,{minutes:d.sim==='good'?2:1});return}
+  if(d.act==='home'){micStop();view.task=null;view.sheet=false;view.say=null;view.mood=null;render();return}
+  if(d.act==='earson'){say("My ears are up! Play your song, I'm listening!");render();micStart().then(ok=>{if(!ok){say("Hmm, I can't hear in here. Use the pretend buttons for now!")}render()});return}
+  if(d.act==='earsoff'){micStop();say('Okay, break time!');render();return}
+  if(d.act==='showsheet'){view.sheet=true;render();return}
+  if(d.act==='hidesheet'){view.sheet=false;render();return}
+  if(d.act==='gosheet'){const first=k.tasks.find(t=>t.done<t.times)||k.tasks[0];if(first){view.task=first.id;view.sheet=true}render();return}
+  if(d.act==='pet'){say(['Purrrr purrrr…','Hee hee, that tickles my whiskers!','More pets please, meow!'][Math.random()*3|0],'happy');render();hearts();return}
+  if(d.act==='feed'){if(k.fish<1){say('No fishies yet! Play a song and you can feed me!')}else{k.fish--;k.fed++;say('Yum yum yum! Thank you, thank you!','happy');save()}render();if(k.fed)hearts(3);return}
+  if(d.act==='closet'){view.closet=!view.closet;view.say=view.closet?'Ooh! Pick something pretty for me!':null;render();return}
+  if(d.item){const it=ITEMS.find(i=>i.id===d.item);
+    if(k.owned.includes(it.id)){k.wearing=k.wearing.includes(it.id)?k.wearing.filter(x=>x!==it.id):[...k.wearing,it.id];say(k.wearing.includes(it.id)?'Ta-da! Do I look fancy?':'Okey dokey, off it goes!','happy')}
+    else if(k.stars>=it.cost){k.stars-=it.cost;k.owned.push(it.id);k.wearing.push(it.id);say(`A ${it.name.toLowerCase()}! I love love love it!`,'happy');confetti()}
+    else say(`That one needs ${it.cost} stars. Finish all your songs to get stars!`);
+    save();render();return}
+  if(d.gate){if(+d.gate===view.gateQ.ans){view.gate=true}view.gateQ=null;render();return}
+  if(d.act==='lock'){view.gate=false;render();return}
+  if(d.step){const t=k.tasks.find(x=>x.id===d.t);t.times=Math.max(1,Math.min(5,t.times+ +d.step));save();render();return}
+  if(d.del){k.tasks=k.tasks.filter(x=>x.id!==d.del);save();render();return}
+  if(d.act==='addtask'){k.tasks.push({id:'t'+Date.now(),name:'New song',times:3,focus:'both',done:0,stuck:0});save();render();return}
+  if(d.act==='addkid'){const cols=['#7FB7E6','#F07C8E','#E3A62F','#2E6B57'];S.kids.push({id:'k'+Date.now(),name:'New kid',color:cols[S.kids.length%4],fish:0,stars:0,owned:[],wearing:[],fed:0,streak:[0,0,0,0,0,0,0],tasks:[],log:[],minutes:0,worksheet:null});save();render();return}
+  if(d.act==='sound'){S.sound=!S.sound;save();render();return}
+  if(d.act==='reset'){const g=view.gate;S=sample();save();view={tab:'parent',gate:g};render();return}
+});
+document.getElementById('kitty-tap-guard');
+document.addEventListener('pointerdown',e=>{if(e.target.closest('#kitty')&&view.tab==='kitty'){hearts(3);say('Purrrr…','happy');const s=$('.speech');if(s)s.textContent='Purrrr…';const m=document.getElementById('kitty');m.innerHTML=kittySVG({mood:'happy',wear:kid().wearing})}});
+document.addEventListener('change',e=>{
+  const d=e.target.dataset,k=kid();
+  if(d.name){k.tasks.find(t=>t.id===d.name).name=e.target.value.trim()||'Song';save();renderTop()}
+  if(d.focus){k.tasks.find(t=>t.id===d.focus).focus=e.target.value;save()}
+  if(d.kname){S.kids.find(x=>x.id===d.kname).name=e.target.value.trim()||'Kid';S.sample=false;save();renderTop()}
+  if(e.target.id==='ws'&&e.target.files[0]){
+    const img=new Image(),r=new FileReader();
+    r.onload=()=>{img.onload=()=>{const c=document.createElement('canvas'),sc=Math.min(1,900/img.width);c.width=img.width*sc;c.height=img.height*sc;c.getContext('2d').drawImage(img,0,0,c.width,c.height);k.worksheet=c.toDataURL('image/jpeg',.75);save();render()};img.src=r.result};
+    r.readAsDataURL(e.target.files[0]);
+  }
+});
+render();
+</script>
