@@ -177,9 +177,19 @@ input[type=text],select{font:inherit;padding:9px 12px;border-radius:12px;border:
 .songmode .deco{display:none}
 .songmode h2{font-size:1.3rem}
 .songmode{gap:10px!important}
+.feedbtn{position:absolute;right:10px;bottom:40px;z-index:3;display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--line);border-radius:99px;padding:8px 14px 8px 8px;font:600 .95rem "Fredoka",sans-serif;color:var(--ink);box-shadow:0 4px 14px rgba(70,55,35,.12);cursor:pointer}
+.feedbtn svg{width:34px;height:34px}
+.feedbtn:active{transform:scale(.97)}
+.stage.hasfeed .deco.plant{display:none}
+.chew .kbody{animation:chew .35s ease-in-out 6}
+@keyframes chew{50%{transform:scale(1.04,.96) translateY(3px)}}
+.task .ic img{width:50px;height:50px;object-fit:cover;border-radius:50%}
+.task.new{background:var(--gold-soft)}
+.sheetthumb{width:56px;height:42px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){.chew .kbody{animation:none}}
 @media (prefers-reduced-motion:reduce){.kbody,.ktail,.listening i{animation:none}.heart{animation-duration:.01s}}
 @media (min-width:700px){.kitty{width:290px}.top{padding-inline:24px}}
-@media (max-width:430px){.kitty{width:min(58vw,230px)}.stage{min-height:0;padding-bottom:30px}.speech{font-size:1rem;max-width:28ch}.kidchip{padding:4px 10px 4px 4px;font-size:.92rem}.kidchip .dot{width:22px;height:22px}.coin{padding:4px 9px}.deco.piano{width:70px}.deco.win{width:58px}.deco.plant{width:48px}.streak span{width:22px;height:22px;font-size:.66rem}.task b{font-size:1.05rem}.careRow{gap:8px}}
+@media (max-width:430px){.kitty{width:min(58vw,230px)}.stage{min-height:0;padding-bottom:30px}.speech{font-size:1rem;max-width:28ch}.kidchip{padding:4px 10px 4px 4px;font-size:.92rem}.kidchip .dot{width:22px;height:22px}.coin{padding:4px 9px}.deco.piano{width:70px}.deco.win{width:58px}.deco.plant{width:48px}.feedbtn{bottom:38px;right:6px;font-size:.82rem;padding:6px 10px 6px 6px;gap:6px}.feedbtn svg{width:28px;height:28px}.streak span{width:22px;height:22px;font-size:.66rem}.task b{font-size:1.05rem}.careRow{gap:8px}}
 </style>
 
 <div class="app">
@@ -204,6 +214,7 @@ const NOTE='<svg viewBox="0 0 24 24" fill="#3FB58F"><path d="M9 17.5a3 3 0 1 1-2
 const SCALE='<svg viewBox="0 0 24 24" fill="#3FB58F"><rect x="2" y="16" width="4" height="5" rx="1"/><rect x="7" y="12" width="4" height="9" rx="1"/><rect x="12" y="8" width="4" height="13" rx="1"/><rect x="17" y="4" width="4" height="17" rx="1"/></svg>';
 const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const HEART='<svg viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z" fill="#F07C8E"/></svg>';
+const SHEETBOWL='<svg viewBox="0 0 48 48"><path d="M10 8h22l6 6v20H10z" fill="#FFF8EC" stroke="#D9CFC2" stroke-width="2"/><path d="M14 16h16M14 21h16M14 26h16" stroke="#B8AC9C" stroke-width="1.6"/><path d="M25 18a3 3 0 1 1-2-2.8V12l6-1v3.2" fill="#4E4757"/><path d="M4 30h40a20 12 0 0 1-40 0z" fill="#A98FD6"/><path d="M6 30h36" stroke="#8F73C4" stroke-width="3"/></svg>';
 const HAND='<svg viewBox="0 0 48 48"><path d="M14 26V12a3 3 0 0 1 6 0v10V8a3 3 0 0 1 6 0v14V10a3 3 0 0 1 6 0v14-8a3 3 0 0 1 6 0v14c0 8-6 14-13 14-5 0-8-2-11-6l-7-9a3 3 0 0 1 5-3z" fill="#FFD9B0" stroke="#D9803A" stroke-width="2"/></svg>';
 const BOWL='<svg viewBox="0 0 48 48"><path d="M6 24h36a18 12 0 0 1-36 0z" fill="#9A6FD0"/><path d="M14 22c2-4 7-5 10-2l3-2v7l-3-2c-3 3-8 2-10-1z" fill="#7FB7E6"/></svg>';
 const SHIRT='<svg viewBox="0 0 48 48"><path d="M16 8l-10 6 4 8 5-3v21h18V19l5 3 4-8-10-6c-1 3-4 5-8 5s-7-2-8-5z" fill="#F07C8E"/></svg>';
@@ -358,19 +369,20 @@ function renderTop(){
 }
 function kittyStage(extra=''){
   const k=kid();
-  return `<div class="stage">
+  return `<div class="stage ${view.tab==='practice'&&!view.task?'hasfeed':''} ${view.chew?'chew':''}">
     <svg class="deco win" viewBox="0 0 90 96" aria-hidden="true"><rect x="4" y="4" width="82" height="88" rx="12" fill="#FFF8EC"/><rect x="11" y="11" width="68" height="74" rx="7" fill="#AEDCF2"/><circle cx="30" cy="34" r="9" fill="#FFE9A8"/><path d="M14 62q12-10 24-2t26-4" stroke="#fff" stroke-width="5" fill="none" opacity=".8"/><rect x="42" y="11" width="5" height="74" fill="#FFF8EC"/><rect x="11" y="45" width="68" height="5" fill="#FFF8EC"/></svg>
     <svg class="deco plant" viewBox="0 0 70 90" aria-hidden="true"><path d="M35 52C20 40 16 22 20 10c12 4 18 18 17 34zM35 52c15-12 19-30 15-42-12 4-18 18-17 34z" fill="#7FBF8E"/><path d="M35 56C35 36 35 20 35 12" stroke="#5E9E6E" stroke-width="3"/><path d="M20 56h30l-4 28H24z" fill="#E8946B"/><path d="M18 52h34v8H18z" fill="#D97F57"/></svg>
     <svg class="deco piano" viewBox="0 0 110 80" aria-hidden="true"><rect x="6" y="6" width="98" height="66" rx="6" fill="#8A5A3B"/><rect x="12" y="40" width="86" height="14" rx="3" fill="#FFF8EC"/><path d="M24 40v14M36 40v14M48 40v14M60 40v14M72 40v14M84 40v14" stroke="#D9C9AE" stroke-width="2"/><rect x="20" y="40" width="6" height="8" fill="#3B2A1D"/><rect x="44" y="40" width="6" height="8" fill="#3B2A1D"/><rect x="68" y="40" width="6" height="8" fill="#3B2A1D"/><rect x="12" y="14" width="86" height="18" rx="3" fill="#75492E"/><rect x="16" y="58" width="12" height="14" fill="#75492E"/><rect x="82" y="58" width="12" height="14" fill="#75492E"/></svg>
     <div class="rug"></div>
     ${view.say?`<div class="speech" aria-live="polite">${esc(view.say)}</div>`:''}
     <svg class="kitty" id="kitty" viewBox="0 0 200 200" role="img" aria-label="${esc(k.name)}'s kitty">${kittySVG({mood:view.mood,listening:mic.on,wear:k.wearing})}</svg>
-    <div class="hearts" id="hearts"></div>${extra}</div>`;
+    <div class="hearts" id="hearts"></div>${extra}
+    ${view.tab==='practice'&&!view.task?`<label class="feedbtn" for="feed" title="Feed the kitty a music sheet">${SHEETBOWL}<span>Feed me a<br>music sheet</span></label><input id="feed" type="file" accept="image/*" hidden>`:''}</div>`;
 }
 function practiceHome(){
   const k=kid();
   const left=k.tasks.filter(t=>t.done<t.times).length;
-  if(!view.say)view.say=left?`Meow meow, ${k.name}! ${left===1?'One little song':left+' songs'} for today!`:`All done today, ${k.name}! Come snuggle me!`;
+  if(!view.say)view.say=k.tasks.length?(left?`Meow meow, ${k.name}! ${left===1?'One little song':left+' songs'} for today!`:`All done today, ${k.name}! Come snuggle me!`):`Hi ${k.name}! Feed me a music sheet and I'll learn your song!`;
   const days=['M','T','W','T','F','S','S'];
   const total=k.tasks.reduce((a,t)=>a+t.times,0)||1;
   const doneCt=k.tasks.reduce((a,t)=>a+Math.min(t.done,t.times),0);
@@ -382,12 +394,11 @@ function practiceHome(){
         <h3 class="sheettitle">Today's songs</h3>
         <div class="streak" aria-label="This week">${k.streak.map((d,i)=>`<span class="${d?'on':''}">${days[i]}</span>`).join('')}</div>
       </div>
-      <div class="tasks">${k.tasks.map(t=>{const done=t.done>=t.times;return `<button class="task" data-task="${t.id}">
-        <span class="ic">${/scale/i.test(t.name)?SCALE:NOTE}</span>
+      <div class="tasks">${k.tasks.map(t=>{const done=t.done>=t.times;return `<button class="task ${view.newTask===t.id?'new':''}" data-task="${t.id}">
+        <span class="ic">${t.sheet?`<img src="${t.sheet}" alt="">`:/scale/i.test(t.name)?SCALE:NOTE}</span>
         <span class="tinfo"><b>${esc(t.name)}</b><small>${FOCI[t.focus]||''}</small></span>
         <span class="tstat ${done?'full':''}">${done?CHECK:`${t.done}/${t.times}`}</span></button>`}).join('')}</div>
-      ${k.tasks.length?'':'<p class="muted" style="text-align:center">No homework yet. A grown-up can add songs and this week\'s music sheet under Grown-ups.</p>'}
-      ${k.worksheet?`<div class="row" style="justify-content:flex-start"><button class="btn" data-act="gosheet"><img src="${k.worksheet}" alt="" style="width:40px;height:30px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">This week's music</button></div>`:''}
+      ${k.tasks.length?'':'<p class="muted" style="text-align:center">No songs yet. Feed the kitty a music sheet and it will learn the song!</p>'}
     </div>
   </div>`;
 }
@@ -404,10 +415,10 @@ function practiceTask(){
         <button class="btn" data-sim="fast">Wobbly beat</button>
         <button class="btn" data-sim="stuck">Got stuck</button>${songFor(t)?'<button class="btn" data-sim="notes">Wrong notes</button>':''}</div></div>`:''}`;
   return `<div class="screen ${songFor(t)&&!done?'songmode':''}" style="padding-top:8px"><button class="back" data-act="home">‹ All songs</button>
-    ${view.sheet&&k.worksheet?`<div class="panel" style="align-items:center"><img src="${k.worksheet}" alt="Music sheet" style="max-width:100%;border-radius:12px"><button class="btn primary" data-act="hidesheet">Back to my kitty</button></div>`:`
+    ${view.sheet&&(t.sheet||k.worksheet)?`<div class="panel" style="align-items:center"><img src="${t.sheet||k.worksheet}" alt="Music sheet" style="max-width:100%;border-radius:12px"><button class="btn primary" data-act="hidesheet">Back to my kitty</button></div>`:`
     ${kittyStage()}
     <div style="text-align:center"><h2>${esc(t.name)}</h2><div class="pips" style="justify-content:center;margin-top:8px">${Array.from({length:t.times},(_,i)=>`<i class="${i<t.done?'on':''}" style="width:22px;height:22px"></i>`).join('')}</div>
-    ${k.worksheet?`<div style="margin-top:10px"><button class="btn" data-act="showsheet">See my music</button></div>`:''}</div>
+    ${(t.sheet||k.worksheet)?`<div style="margin-top:10px"><button class="btn" data-act="showsheet">See my music</button></div>`:''}</div>
     ${!done&&songFor(t)?`<div id="strip" class="strip" aria-label="Song notes">${stripHTML()}</div>${kbSVG()}`:''}
     ${listenUI}`}
   </div>`;
@@ -440,10 +451,10 @@ function parent(){
       <div class="stats"><div class="stat"><b>${k.minutes}</b><span>minutes playing</span></div><div class="stat"><b>${runs}</b><span>run-throughs</span></div><div class="stat"><b>${stuck}</b><span>stuck spots</span></div></div>
       ${k.log.length?`<ul class="log">${k.log.map(l=>`<li><time>${esc(l.t)}</time><span>${esc(l.text).replace(/(stuck[^,]*)/,'<span class="flag">$1</span>')}</span></li>`).join('')}</ul>`:'<p class="muted" style="margin:0">No practice yet today.</p>'}
     </div>
-    <div class="panel"><h3>This week's music sheet &amp; songs</h3>
-      <div class="worksheet">${k.worksheet?`<img src="${k.worksheet}" alt="Worksheet photo">`:'<div class="wsph">No music sheet yet. Snap a photo of the teacher\'s page.</div>'}
-        <label class="btn primary" for="ws">Upload music sheet photo</label><input id="ws" type="file" accept="image/*" hidden></div>
+    <div class="panel"><h3>Songs</h3>
+      <p class="muted" style="margin:0;font-size:.9rem">New songs come from feeding the kitty a music sheet on the Practice screen. Here you can rename them, set how many times to play, and check the notes.</p>
       <div>${k.tasks.map(t=>`<div class="edit" data-row="${t.id}">
+        ${t.sheet?`<img class="sheetthumb" src="${t.sheet}" alt="" style="grid-column:1/-1">`:''}
         <input type="text" id="n-${t.id}" value="${esc(t.name)}" data-name="${t.id}" aria-label="Song name">
         <div class="stepper" aria-label="Times to play"><button data-step="-1" data-t="${t.id}">−</button><span>${t.times}×</span><button data-step="1" data-t="${t.id}">+</button></div>
         <button class="btn danger" data-del="${t.id}" aria-label="Remove">Remove</button>
@@ -470,7 +481,7 @@ function notesRow(t,k){
   const st=view.readStatus&&view.readStatus.id===t.id?`<span class="status ${view.readStatus.err?'err':''}">${esc(view.readStatus.msg)}</span>`:'';
   return `<div class="notesbar">
       ${sg?`<span class="muted">${sg.notes.length} notes:</span>`:'<span class="muted">No notes yet, so the kitty checks rhythm only.</span>'}
-      <button class="btn" data-read="${t.id}" ${k.worksheet?'':'disabled title="Upload a music sheet first"'}>Read notes from sheet</button>
+      <button class="btn" data-read="${t.id}" ${(t.sheet||k.worksheet)?'':'disabled title="Feed the kitty this song\'s sheet first"'}>Read notes again</button>
       <button class="btn" data-editnotes="${t.id}">${view.editing===t.id?'Close editor':'Edit notes'}</button>${st}
     </div>
     ${sg?`<div class="notes">${chips}</div>`:''}
@@ -488,44 +499,82 @@ function noteEditor(t){
 
 /* ---------- read notes from the sheet photo with Claude ---------- */
 let SDK=null;
+// Sends only the sheet photo to Claude; returns {found,title,notes:[[midi,beats],...]}
+async function transcribeSheet(dataUrl,{name,hand}={}){
+  if(!SDK)SDK=(await import('https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm')).default;
+  const client=new SDK({apiKey:S.apiKey,dangerouslyAllowBrowser:true});
+  const data=dataUrl.split(',')[1];
+  const which=name?`Find the piece called "${name}" (if the page has only one piece, use it).`:'Pick the main piece on the page (the first one if there are several) and give its title exactly as printed; if there is no printed title, give a short name from the first words of the lyrics or "Untitled".';
+  const part=hand==='left'?'the left-hand (bass clef) part':'the melody (right hand, treble clef)';
+  const res=await client.beta.messages.create({
+    model:'claude-opus-5',
+    max_tokens:16000,
+    betas:['server-side-fallback-2026-07-01'],
+    fallbacks:'default',
+    output_config:{format:{type:'json_schema',schema:{
+      type:'object',additionalProperties:false,required:['found','title','notes'],
+      properties:{
+        found:{type:'boolean'},
+        title:{type:'string'},
+        notes:{type:'array',items:{type:'object',additionalProperties:false,required:['pitch','beats'],
+          properties:{pitch:{type:'string'},beats:{type:'number'}}}}
+      }}}},
+    messages:[{role:'user',content:[
+      {type:'image',source:{type:'base64',media_type:'image/jpeg',data}},
+      {type:'text',text:`This is a photo of a beginner piano lesson page. ${which} Transcribe ${part} as an ordered list of single notes. For each note give the pitch in scientific notation (middle C is C4, sharps as C#4, flats as Bb4) and its length in beats (quarter note = 1, half = 2, whole = 4, eighth = 0.5). Where two notes sound together, give only the top melody note. Skip rests. Follow repeat signs by writing the repeated notes out. If you cannot find or read the piece, set found to false and return an empty list.`}
+    ]}]
+  });
+  if(res.stop_reason==='refusal')return {found:false,title:'',notes:[],refused:true};
+  const out=JSON.parse(res.content.filter(b=>b.type==='text').map(b=>b.text).join(''));
+  const notes=(out.notes||[]).map(n=>[parsePitch(n.pitch),Math.max(.25,Math.min(8,+n.beats||1))]).filter(n=>n[0]!==null);
+  return {found:!!out.found&&notes.length>0,title:(out.title||'').trim(),notes};
+}
+function readErrorMsg(e){
+  const st=e&&e.status;
+  return st===401?'That API key was not accepted. Check it under Sheet reading.':st===429?'Too many requests right now. Try again in a minute.':'Could not reach the sheet reader. Check your internet and try again.';
+}
+// Shrink a photo for storage and reading (long side ~1600px keeps note heads legible)
+function loadPhoto(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),r=new FileReader();
+    r.onerror=rej;img.onerror=rej;
+    r.onload=()=>{img.onload=()=>{const c=document.createElement('canvas'),sc=Math.min(1,1600/Math.max(img.width,img.height));c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82))};img.src=r.result};
+    r.readAsDataURL(file);
+  });
+}
+// The kid (or parent) feeds the kitty a sheet: the song appears in today's list, notes read if a key is set
+async function feedKitty(file){
+  const k=kid();
+  let sheet;
+  try{sheet=await loadPhoto(file)}catch(e){say("Hmm, I couldn't see that picture. Try again?");render();return}
+  const t={id:'t'+Date.now(),name:'New song',sheet,times:3,focus:'right',done:0,stuck:0,notes:[]};
+  k.tasks.unshift(t);S.sample=false;save();
+  view.newTask=t.id;view.chew=true;say('Nom nom nom… reading your music!','happy');render();
+  setTimeout(()=>{view.chew=false},2200);
+  if(!S.apiKey){
+    say("Yum! I'll listen to your rhythm. Ask a grown-up for my reading glasses so I can check your notes too!");
+    view.readStatus={id:t.id,msg:'Add your API key under Sheet reading, then tap "Read notes again".',err:true};
+    render();return;
+  }
+  try{
+    const out=await transcribeSheet(sheet,{hand:t.focus});
+    if(out.title)t.name=out.title;
+    if(out.found){t.notes=out.notes;save();say(`Yum! I learned ${t.name}, ${out.notes.length} notes! Tap it and play it for me!`,'happy');confetti()}
+    else{save();say(out.refused?"I couldn't read that page. Try a clearer photo?":`I ate the sheet but couldn't read the notes. Try a straighter, brighter photo, or a grown-up can type them in.`)}
+  }catch(e){say("Oops, my glasses fogged up. Check the internet and try again?");view.readStatus={id:t.id,msg:readErrorMsg(e),err:true}}
+  view.chew=false;render();
+}
 async function readSheet(t,k){
   if(!S.apiKey){view.readStatus={id:t.id,msg:'Add your API key under Sheet reading first.',err:true};render();return}
   view.readStatus={id:t.id,msg:'Reading the sheet…'};render();
   try{
-    if(!SDK)SDK=(await import('https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm')).default;
-    const client=new SDK({apiKey:S.apiKey,dangerouslyAllowBrowser:true});
-    const data=k.worksheet.split(',')[1];
-    const hand=t.focus==='left'?'the left-hand (bass clef) part':'the melody (right hand, treble clef)';
-    const res=await client.beta.messages.create({
-      model:'claude-opus-5',
-      max_tokens:16000,
-      betas:['server-side-fallback-2026-07-01'],
-      fallbacks:'default',
-      output_config:{format:{type:'json_schema',schema:{
-        type:'object',additionalProperties:false,required:['found','notes'],
-        properties:{
-          found:{type:'boolean'},
-          notes:{type:'array',items:{type:'object',additionalProperties:false,required:['pitch','beats'],
-            properties:{pitch:{type:'string'},beats:{type:'number'}}}}
-        }}}},
-      messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:'image/jpeg',data}},
-        {type:'text',text:`This is a photo of a beginner piano lesson page. Find the piece called "${t.name}" (if the page has only one piece, use it). Transcribe ${hand} as an ordered list of single notes. For each note give the pitch in scientific notation (middle C is C4, sharps as C#4, flats as Bb4) and its length in beats (quarter note = 1, half = 2, whole = 4, eighth = 0.5). Where two notes sound together, give only the top melody note. Skip rests. Follow repeat signs by writing the repeated notes out. If you cannot find or read the piece, set found to false and return an empty list.`}
-      ]}]
-    });
-    if(res.stop_reason==='refusal'){view.readStatus={id:t.id,msg:'Could not read this sheet. Try a clearer photo or enter the notes by hand.',err:true};render();return}
-    const txt=res.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const out=JSON.parse(txt);
-    const notes=(out.notes||[]).map(n=>[parsePitch(n.pitch),Math.max(.25,Math.min(8,+n.beats||1))]).filter(n=>n[0]!==null);
-    if(!out.found||!notes.length){view.readStatus={id:t.id,msg:`Couldn't find "${t.name}" on the sheet. Check the song name matches, or enter the notes by hand.`,err:true};render();return}
-    t.notes=notes;delete t.song;save();
-    view.readStatus={id:t.id,msg:`Found ${notes.length} notes. Please check them against the sheet.`};
+    const out=await transcribeSheet(t.sheet||k.worksheet,{name:t.name==='New song'?'':t.name,hand:t.focus});
+    if(!out.found){view.readStatus={id:t.id,msg:out.refused?'Could not read this sheet. Try a clearer photo or enter the notes by hand.':`Couldn't find "${t.name}" on the sheet. Check the song name matches, or enter the notes by hand.`,err:true};render();return}
+    if(t.name==='New song'&&out.title)t.name=out.title;
+    t.notes=out.notes;delete t.song;save();
+    view.readStatus={id:t.id,msg:`Found ${out.notes.length} notes. Please check them against the sheet.`};
     view.editing=t.id;render();
-  }catch(e){
-    const st=e&&e.status;
-    view.readStatus={id:t.id,err:true,msg:st===401?'That API key was not accepted. Check it under Sheet reading.':st===429?'Too many requests right now. Try again in a minute.':'Could not reach the sheet reader. Check your internet and try again.'};
-    render();
-  }
+  }catch(e){view.readStatus={id:t.id,err:true,msg:readErrorMsg(e)};render()}
 }
 function render(){
   renderTop();
@@ -814,14 +863,13 @@ document.addEventListener('click',e=>{
   const k=kid(),d=b.dataset;
   if(d.tab){micStop();view.tab=d.tab;view.task=null;view.sheet=false;view.say=null;view.mood=null;view.closet=false;render();return}
   if(d.kid){micStop();S.active=d.kid;view.task=null;view.say=null;view.mood=null;save();render();return}
-  if(d.task){const t=k.tasks.find(x=>x.id===d.task);if(t.done>=t.times){say('You finished that one, superstar!','happy')}else{view.task=d.task;say(`Ready, set... play ${t.name}! ${FOCI[t.focus]}. My ears are up!`)}render();return}
+  if(d.task){view.newTask=null;const t=k.tasks.find(x=>x.id===d.task);if(t.done>=t.times){say('You finished that one, superstar!','happy')}else{view.task=d.task;say(`Ready, set... play ${t.name}! ${FOCI[t.focus]}. My ears are up!`)}render();return}
   if(d.sim){finishRun(d.sim,{minutes:d.sim==='good'?2:1,wrong:d.sim==='notes'?4:0});return}
   if(d.act==='home'){micStop();view.task=null;view.sheet=false;view.say=null;view.mood=null;render();return}
   if(d.act==='earson'){songStart(songFor(k.tasks.find(x=>x.id===view.task)));say("My ears are up! Play your song, I'm listening!");render();micStart().then(ok=>{if(!ok){say("Hmm, I can't hear in here. Use the pretend buttons for now!")}render()});return}
   if(d.act==='earsoff'){const enough=mic.onsets.length>=6;if(enough)micRunEnd();micStop();if(!enough)say('Okay, break time!');render();return}
   if(d.act==='showsheet'){view.sheet=true;render();return}
   if(d.act==='hidesheet'){view.sheet=false;render();return}
-  if(d.act==='gosheet'){const first=k.tasks.find(t=>t.done<t.times)||k.tasks[0];if(first){view.task=first.id;view.sheet=true}render();return}
   if(d.act==='pet'){say(['Purrrr purrrr…','Hee hee, that tickles my whiskers!','More pets please, meow!'][Math.random()*3|0],'happy');render();hearts();return}
   if(d.act==='feed'){if(k.fish<1){say('No fishies yet! Play a song and you can feed me!')}else{k.fish--;k.fed++;say('Yum yum yum! Thank you, thank you!','happy');save()}render();if(k.fed)hearts(3);return}
   if(d.act==='closet'){view.closet=!view.closet;view.say=view.closet?'Ooh! Pick something pretty for me!':null;render();return}
@@ -832,7 +880,7 @@ document.addEventListener('click',e=>{
     save();render();return}
   if(d.gate){if(+d.gate===view.gateQ.ans){view.gate=true}view.gateQ=null;render();return}
   if(d.act==='lock'){view.gate=false;render();return}
-  if(d.read){const t=k.tasks.find(x=>x.id===d.read);if(t&&k.worksheet)readSheet(t,k);return}
+  if(d.read){const t=k.tasks.find(x=>x.id===d.read);if(t&&(t.sheet||k.worksheet))readSheet(t,k);return}
   if(d.editnotes){view.editing=view.editing===d.editnotes?null:d.editnotes;render();return}
   if(d.beat){view.edBeat=+d.beat;render();return}
   if(d.addnote){const t=k.tasks.find(x=>x.id===d.t);const cur=songFor(t);t.notes=cur?cur.notes.map(n=>n.slice()):[];delete t.song;t.notes.push([+d.addnote,view.edBeat||1]);save();render();return}
@@ -853,11 +901,7 @@ document.addEventListener('change',e=>{
   if(d.focus){k.tasks.find(t=>t.id===d.focus).focus=e.target.value;save()}
   if(d.apikey){const v=e.target.value.trim();if(v&&!v.startsWith('••')){S.apiKey=v;save();render()}else if(!v){S.apiKey='';save();render()}return}
   if(d.kname){S.kids.find(x=>x.id===d.kname).name=e.target.value.trim()||'Kid';S.sample=false;save();renderTop()}
-  if(e.target.id==='ws'&&e.target.files[0]){
-    const img=new Image(),r=new FileReader();
-    r.onload=()=>{img.onload=()=>{const c=document.createElement('canvas'),sc=Math.min(1,900/img.width);c.width=img.width*sc;c.height=img.height*sc;c.getContext('2d').drawImage(img,0,0,c.width,c.height);k.worksheet=c.toDataURL('image/jpeg',.75);save();render()};img.src=r.result};
-    r.readAsDataURL(e.target.files[0]);
-  }
+  if(e.target.id==='feed'&&e.target.files[0]){feedKitty(e.target.files[0]);e.target.value=''}
 });
 render();
 </script>
