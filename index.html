@@ -144,7 +144,7 @@ const FOCI={right:'Right hand',left:'Left hand',both:'Both hands',slow:'Nice and
 /* ---------- kitty accessories ---------- */
 const ITEMS=[
   {id:'bow',name:'Pink bow',cost:1,svg:'<g transform="translate(134 50) rotate(18)"><path d="M0 0C-6-12-20-14-22-6c-2 8 12 10 22 6zM0 0c6-12 20-14 22-6 2 8-12 10-22 6z" fill="#FF8BA0"/><circle r="6" fill="#E85D7E"/></g>'},
-  {id:'glasses',name:'Round glasses',cost:2,svg:'<g fill="none" stroke="#5B4636" stroke-width="4"><circle cx="80" cy="92" r="16"/><circle cx="120" cy="92" r="16"/><path d="M96 92h8"/></g>'},
+  {id:'glasses',name:'Round glasses',cost:2,svg:'<g fill="none" stroke="#E8A33D" stroke-width="4"><circle cx="78" cy="90" r="16"/><circle cx="122" cy="90" r="16"/><path d="M94 90h12"/></g>'},
   {id:'scarf',name:'Cozy scarf',cost:2,svg:'<g><path d="M56 138c26 14 62 14 88 0l3 14c-30 16-64 16-94 0z" fill="#8FC7F2"/><path d="M124 150l10 28-14 3-8-27z" fill="#6FAEE0"/></g>'},
   {id:'hat',name:'Party hat',cost:3,svg:'<g><path d="M100 2L80 48h40z" fill="#B48FE0"/><path d="M91 24h18M86 36h28" stroke="#FFB94A" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="4" r="6" fill="#FFB94A"/></g>'},
   {id:'flower',name:'Daisy',cost:3,svg:'<g transform="translate(62 52)"><g fill="#fff" stroke="#F0E4D2"><circle cx="0" cy="-9" r="6.5"/><circle cx="9" cy="0" r="6.5"/><circle cx="0" cy="9" r="6.5"/><circle cx="-9" cy="0" r="6.5"/></g><circle r="5.5" fill="#FFB94A"/></g>'},
@@ -154,37 +154,40 @@ function itemPreview(it){return `<svg viewBox="34 -4 132 168" aria-hidden="true"
 
 /* ---------- kitty drawing ---------- */
 function kittySVG(o={}){
+  const FUR='#4E4757',DK='#3B3543',EAR='#F2907B',AMB='#E8A33D',PUP='#2A2430';
   const wear=(o.wear||[]).map(id=>ITEMS.find(i=>i.id===id)?.svg||'').join('');
   const eyes=o.mood==='happy'
-    ? '<path d="M69 92q11-14 22 0M109 92q11-14 22 0" stroke="#5B4636" stroke-width="5.5" fill="none" stroke-linecap="round"/>'
+    ? `<path d="M67 90q11-13 22 0M111 90q11-13 22 0" stroke="${PUP}" stroke-width="6" fill="none" stroke-linecap="round"/>`
     : o.mood==='sleepy'
-    ? '<path d="M71 94h18M111 94h18" stroke="#5B4636" stroke-width="5.5" stroke-linecap="round"/>'
-    : `<g><ellipse cx="80" cy="93" rx="11.5" ry="14" fill="#4A3626"/><ellipse cx="120" cy="93" rx="11.5" ry="14" fill="#4A3626"/>
-       <circle cx="84.5" cy="88" r="4.5" fill="#fff"/><circle cx="124.5" cy="88" r="4.5" fill="#fff"/>
-       <circle cx="76.5" cy="98" r="2.2" fill="#fff" opacity=".85"/><circle cx="116.5" cy="98" r="2.2" fill="#fff" opacity=".85"/></g>`;
+    ? `<path d="M69 92h18M113 92h18" stroke="${PUP}" stroke-width="6" stroke-linecap="round"/>`
+    : `<g><circle cx="78" cy="90" r="15" fill="${AMB}"/><circle cx="122" cy="90" r="15" fill="${AMB}"/>
+       <ellipse cx="81" cy="87" rx="9" ry="10.5" fill="${PUP}"/><ellipse cx="125" cy="87" rx="9" ry="10.5" fill="${PUP}"/>
+       <circle cx="77" cy="83" r="3.4" fill="#fff"/><circle cx="121" cy="83" r="3.4" fill="#fff"/>
+       <circle cx="84" cy="92" r="1.8" fill="#fff" opacity=".9"/><circle cx="128" cy="92" r="1.8" fill="#fff" opacity=".9"/></g>`;
   const body=o.mini?'':`
-    <ellipse cx="100" cy="187" rx="52" ry="9" fill="#C98A4B" opacity=".18"/>
-    <g class="ktail"><path d="M147 156c26-2 36-24 21-40" stroke="#FFB870" stroke-width="15" fill="none" stroke-linecap="round"/></g>
-    <path d="M60 128c-8 26 4 54 40 54s48-28 40-54z" fill="#FFD8A8"/>
-    <ellipse cx="100" cy="164" rx="23" ry="15" fill="#FFF3DF"/>
-    <ellipse cx="76" cy="177" rx="13" ry="8.5" fill="#FFE7C6"/>
-    <ellipse cx="124" cy="177" rx="13" ry="8.5" fill="#FFE7C6"/>
-    <path d="M72 177h4M78 173v4M120 177h4M126 173v4" stroke="#EFB273" stroke-width="2.4" stroke-linecap="round"/>`;
+    <ellipse cx="100" cy="188" rx="54" ry="8" fill="${DK}" opacity=".16"/>
+    <g class="ktail"><path d="M146 168C186 160 190 108 168 88" stroke="${FUR}" stroke-width="17" fill="none" stroke-linecap="round"/></g>
+    <path d="M62 128c-10 30 2 60 38 60s48-30 38-60z" fill="${FUR}"/>
+    <path d="M138 150c8 4 12 22 4 34-5 7-14 6-18 2z" fill="${DK}"/>
+    <path d="M62 150c-8 4-12 22-4 34 5 7 14 6 18 2z" fill="${DK}"/>
+    <path d="M100 152v34" stroke="${DK}" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+    <ellipse cx="82" cy="186" rx="14" ry="7" fill="${FUR}"/>
+    <ellipse cx="118" cy="186" rx="14" ry="7" fill="${FUR}"/>`;
   return `<g class="kbody">${body}
-    <g class="kears" style="transform-origin:100px 66px;transform:${o.listening?'scale(1,1.14)':'none'}">
-      <path d="M53 76C45 46 55 28 66 24c9-3 22 7 28 18z" fill="#FFD8A8"/>
-      <path d="M147 76c8-30-2-48-13-52-9-3-22 7-28 18z" fill="#FFD8A8"/>
-      <path d="M62 64c-3-17 4-27 10-29 6-2 13 5 17 12z" fill="#FFB3C1"/>
-      <path d="M138 64c3-17-4-27-10-29-6-2-13 5-17 12z" fill="#FFB3C1"/>
+    <g class="kears" style="transform-origin:100px 60px;transform:${o.listening?'scale(1,1.15)':'none'}">
+      <path d="M50 72L58 16l38 30z" fill="${FUR}"/>
+      <path d="M150 72l-8-56-38 30z" fill="${FUR}"/>
+      <path d="M58 60l5-30 20 17z" fill="${EAR}"/>
+      <path d="M142 60l-5-30-20 17z" fill="${EAR}"/>
     </g>
-    <circle cx="100" cy="98" r="57" fill="#FFD8A8"/>
-    <path d="M84 44q16-9 32 0l-7 13q-9-4-18 0z" fill="#FFB870"/>
-    <circle cx="64" cy="113" r="10" fill="#FFB3C1" opacity=".65"/>
-    <circle cx="136" cy="113" r="10" fill="#FFB3C1" opacity=".65"/>
+    <circle cx="100" cy="92" r="55" fill="${FUR}"/>
+    <path d="M93 38l3-8 3 7 3-7 3 8" stroke="${DK}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="64" cy="110" r="9" fill="${EAR}" opacity=".28"/>
+    <circle cx="136" cy="110" r="9" fill="${EAR}" opacity=".28"/>
     ${eyes}
-    <path d="M95.5 105h9l-4.5 5.5z" fill="#FF8BA0"/>
-    <path d="M100 110q-4 8-12 4.5M100 110q4 8 12 4.5" stroke="#5B4636" stroke-width="2.8" fill="none" stroke-linecap="round"/>
-    <g stroke="#EBBE90" stroke-width="2.2" stroke-linecap="round"><path d="M56 108l-15-2M57 115l-14 4M144 108l15-2M143 115l14 4"/></g>
+    <path d="M96 104h8l-4 5z" fill="${DK}"/>
+    <path d="M100 108q-4 7-11 4M100 108q4 7 11 4" stroke="${PUP}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+    <g stroke="${PUP}" stroke-width="2" stroke-linecap="round" opacity=".75"><path d="M54 104l-17-3M55 112l-16 3M146 104l17-3M145 112l16 3"/></g>
     ${wear}
   </g>`;
 }
